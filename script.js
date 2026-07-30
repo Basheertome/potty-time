@@ -8,35 +8,30 @@ const STEPS = [
     title: "Potty Time",
     instruction: "Sit down and go potty!",
     emoji: "\u{1F6BD}",
-    color: "#FFE29A",
   },
   {
     id: "wipe",
     title: "Wipe",
     instruction: "Wipe all nice and clean!",
     emoji: "\u{1F9FB}",
-    color: "#FFC1D6",
   },
   {
     id: "pantsup",
     title: "Pants Up",
     instruction: "Pull your pants back up!",
     emoji: "\u{1F456}",
-    color: "#A6E8E0",
   },
   {
     id: "flush",
     title: "Flush",
     instruction: "Push the handle to flush!",
     emoji: "\u{1F6BD}",
-    color: "#B8F2C9",
   },
   {
     id: "washhands",
     title: "Wash Hands",
     instruction: "Wash your hands with the song!",
     emoji: "\u{1F9FC}",
-    color: "#FCE3B0",
     isSong: true,
   },
 ];
@@ -77,7 +72,6 @@ function render() {
     return;
   }
   const step = STEPS[state.stepIndex];
-  app.style.background = step.color;
 
   const card = document.createElement("div");
   card.className = "step-card";
@@ -183,8 +177,6 @@ function goToNextStep() {
 }
 
 function renderComplete() {
-  app.style.background = "#FFD6E8";
-
   spawnConfetti();
 
   const card = document.createElement("div");

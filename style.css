@@ -25,7 +25,10 @@ html, body {
   width: 100vw;
   overflow: hidden;
   display: flex;
-  transition: background 0.4s ease;
+  background-image: url("images/bg-pond.png");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 
 .step-card {
