@@ -29,7 +29,7 @@ const STEPS = [
   {
     id: "washhands",
     title: "Wash Hands",
-    emoji: "\u{1F9FC}",
+    emoji: "\u{1FAE7}",
     isSong: true,
   },
 ];
@@ -238,7 +238,7 @@ function render() {
 
     app.appendChild(card);
 
-    emoji.classList.add("scrubbing");
+    emoji.classList.add("bubble-bob");
     runHandWashSong(() => goToNextStep());
     return;
   }
@@ -279,21 +279,56 @@ function showYay(card) {
   setTimeout(() => yay.remove(), 1400);
 }
 
+const TOTAL_WASH_BUBBLES = 45;
+
+function spawnWashBubble() {
+  const bubble = document.createElement("div");
+  bubble.className = "wash-bubble";
+  bubble.textContent = "\u{1FAE7}";
+  const size = 1.6 + Math.random() * 2.2;
+  bubble.style.fontSize = `${size}rem`;
+  bubble.style.left = `${4 + Math.random() * 92}%`;
+  bubble.style.top = `${10 + Math.random() * 78}%`;
+  app.appendChild(bubble);
+  return bubble;
+}
+
+function popAllWashBubbles(bubbles) {
+  const spread = 1000;
+  bubbles.forEach((bubble, i) => {
+    const delay = (i / Math.max(bubbles.length, 1)) * spread + Math.random() * 60;
+    setTimeout(() => {
+      bubble.classList.add("pop");
+      setTimeout(() => bubble.remove(), 320);
+    }, delay);
+  });
+}
+
 function runHandWashSong(onDone) {
   const fill = document.getElementById("song-progress-fill");
   const audio = new Audio(HANDWASH_AUDIO_SRC);
+  const bubbles = [];
+  let bubblesSpawned = 0;
 
   audio.addEventListener("timeupdate", () => {
     if (audio.duration) {
-      fill.style.width = `${(audio.currentTime / audio.duration) * 100}%`;
+      const progress = audio.currentTime / audio.duration;
+      fill.style.width = `${progress * 100}%`;
+
+      const targetCount = Math.floor(progress * TOTAL_WASH_BUBBLES);
+      while (bubblesSpawned < targetCount) {
+        bubbles.push(spawnWashBubble());
+        bubblesSpawned += 1;
+      }
     }
   });
 
   const finish = () => {
+    popAllWashBubbles(bubbles);
     setTimeout(() => {
       playChime();
       onDone();
-    }, 1500);
+    }, 1800);
   };
 
   audio.addEventListener("ended", finish);
