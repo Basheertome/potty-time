@@ -43,15 +43,12 @@ const STEPS = [
 
 const state = {
   stepIndex: 0,
-  muted: false,
   finished: false,
-  currentAudio: null,
 };
 
 const app = document.getElementById("app");
 
 function playChime() {
-  if (state.muted) return;
   try {
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
     const notes = [523.25, 659.25, 783.99];
@@ -82,7 +79,6 @@ function render() {
   const step = STEPS[state.stepIndex];
   app.style.background = step.color;
 
-  app.appendChild(buildMuteToggle());
   app.appendChild(buildProgressDots());
 
   const card = document.createElement("div");
@@ -117,35 +113,22 @@ function render() {
     fill.id = "song-progress-fill";
     track.appendChild(fill);
     card.appendChild(track);
+
+    app.appendChild(card);
+
+    emoji.classList.add("scrubbing");
+    runHandWashSong(() => goToNextStep());
+    return;
   }
 
   const button = document.createElement("button");
   button.className = "big-button";
-  button.textContent = step.isSong ? "Start Washing!" : "I Did It!";
+  button.textContent = "I Did It!";
   button.id = "action-button";
-  button.addEventListener("click", () => handleStepComplete(step, emoji, card));
+  button.addEventListener("click", () => handleStepComplete(emoji, card));
   card.appendChild(button);
 
   app.appendChild(card);
-}
-
-function updateMuteButton(btn) {
-  btn.textContent = state.muted ? "\u{1F507}" : "\u{1F50A}";
-  btn.setAttribute("aria-label", state.muted ? "Unmute" : "Mute");
-}
-
-function buildMuteToggle() {
-  const btn = document.createElement("button");
-  btn.className = "mute-toggle";
-  updateMuteButton(btn);
-  btn.addEventListener("click", () => {
-    state.muted = !state.muted;
-    if (state.currentAudio) {
-      state.currentAudio.muted = state.muted;
-    }
-    updateMuteButton(btn);
-  });
-  return btn;
 }
 
 function buildProgressDots() {
@@ -162,17 +145,11 @@ function buildProgressDots() {
   return document.createDocumentFragment();
 }
 
-function handleStepComplete(step, emojiEl, card) {
+function handleStepComplete(emojiEl, card) {
   const button = document.getElementById("action-button");
   button.disabled = true;
 
-  emojiEl.classList.add(step.isSong ? "scrubbing" : "bounce");
-
-  if (step.isSong) {
-    runHandWashSong(() => goToNextStep());
-    return;
-  }
-
+  emojiEl.classList.add("bounce");
   playChime();
   showYay(card);
 
@@ -190,8 +167,6 @@ function showYay(card) {
 function runHandWashSong(onDone) {
   const fill = document.getElementById("song-progress-fill");
   const audio = new Audio(HANDWASH_AUDIO_SRC);
-  audio.muted = state.muted;
-  state.currentAudio = audio;
 
   audio.addEventListener("timeupdate", () => {
     if (audio.duration) {
@@ -200,7 +175,6 @@ function runHandWashSong(onDone) {
   });
 
   const finish = () => {
-    state.currentAudio = null;
     playChime();
     onDone();
   };
@@ -224,7 +198,6 @@ function goToNextStep() {
 
 function renderComplete() {
   app.style.background = "#FFD6E8";
-  app.appendChild(buildMuteToggle());
 
   spawnConfetti();
 
@@ -245,16 +218,6 @@ function renderComplete() {
   instruction.className = "step-instruction";
   instruction.textContent = "You're a Potty Pro!";
   card.appendChild(instruction);
-
-  const button = document.createElement("button");
-  button.className = "big-button";
-  button.textContent = "Do It Again!";
-  button.addEventListener("click", () => {
-    state.stepIndex = 0;
-    state.finished = false;
-    render();
-  });
-  card.appendChild(button);
 
   app.appendChild(card);
 
