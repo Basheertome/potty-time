@@ -1,8 +1,6 @@
 // Potty Time - toddler step-by-step checklist
-// Audio is placeholder-generated via the Web Speech API so the app works
-// with zero asset files. To swap in real recordings later, set an
-// `audioSrc` (mp3/ogg path) on a step or song line and prefer it over speech
-// in speak()/playTone().
+
+const HANDWASH_AUDIO_SRC = "audio/handwash-song.mp3";
 
 const STEPS = [
   {
@@ -11,7 +9,6 @@ const STEPS = [
     instruction: "Sit down and go potty!",
     emoji: "\u{1F6BD}",
     color: "#FFE29A",
-    phrase: "Great job going potty!",
   },
   {
     id: "wipe",
@@ -19,7 +16,6 @@ const STEPS = [
     instruction: "Wipe all nice and clean!",
     emoji: "\u{1F9FB}",
     color: "#FFC1D6",
-    phrase: "Nice and clean wiping!",
   },
   {
     id: "pantsup",
@@ -27,7 +23,6 @@ const STEPS = [
     instruction: "Pull your pants back up!",
     emoji: "\u{1F456}",
     color: "#A6E8E0",
-    phrase: "Pants up, all set!",
   },
   {
     id: "flush",
@@ -35,7 +30,6 @@ const STEPS = [
     instruction: "Push the handle to flush!",
     emoji: "\u{1F6BD}",
     color: "#B8F2C9",
-    phrase: "Bye bye, flush it away!",
   },
   {
     id: "washhands",
@@ -47,38 +41,14 @@ const STEPS = [
   },
 ];
 
-const SONG_LINES = [
-  "Wash, wash, wash your hands,",
-  "Scrub them nice and clean.",
-  "Rub the front, rub the back,",
-  "Cleanest hands you've seen!",
-  "Rinse away the soap and bubbles,",
-  "Dry them with a towel.",
-  "Wash, wash, wash your hands,",
-  "You did it, take a bow!",
-];
-
 const state = {
   stepIndex: 0,
   muted: false,
   finished: false,
+  currentAudio: null,
 };
 
 const app = document.getElementById("app");
-
-function speak(text) {
-  if (state.muted) return;
-  if (!("speechSynthesis" in window)) return;
-  try {
-    window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.pitch = 1.3;
-    utterance.rate = 0.95;
-    window.speechSynthesis.speak(utterance);
-  } catch (e) {
-    // speech synthesis unsupported/blocked; animation-only fallback is fine
-  }
-}
 
 function playChime() {
   if (state.muted) return;
@@ -137,6 +107,7 @@ function render() {
     const caption = document.createElement("div");
     caption.className = "song-caption";
     caption.id = "song-caption";
+    caption.textContent = "\u{1F3B5} Wash your hands! \u{1F3B5}";
     card.appendChild(caption);
 
     const track = document.createElement("div");
@@ -158,17 +129,21 @@ function render() {
   app.appendChild(card);
 }
 
+function updateMuteButton(btn) {
+  btn.textContent = state.muted ? "\u{1F507}" : "\u{1F50A}";
+  btn.setAttribute("aria-label", state.muted ? "Unmute" : "Mute");
+}
+
 function buildMuteToggle() {
   const btn = document.createElement("button");
   btn.className = "mute-toggle";
-  btn.textContent = state.muted ? "\u{1F507}" : "\u{1F50A}";
-  btn.setAttribute("aria-label", state.muted ? "Unmute" : "Mute");
+  updateMuteButton(btn);
   btn.addEventListener("click", () => {
     state.muted = !state.muted;
-    if (state.muted && "speechSynthesis" in window) {
-      window.speechSynthesis.cancel();
+    if (state.currentAudio) {
+      state.currentAudio.muted = state.muted;
     }
-    render();
+    updateMuteButton(btn);
   });
   return btn;
 }
@@ -194,12 +169,11 @@ function handleStepComplete(step, emojiEl, card) {
   emojiEl.classList.add(step.isSong ? "scrubbing" : "bounce");
 
   if (step.isSong) {
-    runHandWashSong(card, () => goToNextStep());
+    runHandWashSong(() => goToNextStep());
     return;
   }
 
   playChime();
-  speak(step.phrase);
   showYay(card);
 
   setTimeout(() => goToNextStep(), 1600);
@@ -213,26 +187,29 @@ function showYay(card) {
   setTimeout(() => yay.remove(), 1400);
 }
 
-function runHandWashSong(card, onDone) {
-  const caption = document.getElementById("song-caption");
+function runHandWashSong(onDone) {
   const fill = document.getElementById("song-progress-fill");
-  const lineDuration = 2300;
-  const totalDuration = lineDuration * SONG_LINES.length;
-  let elapsed = 0;
+  const audio = new Audio(HANDWASH_AUDIO_SRC);
+  audio.muted = state.muted;
+  state.currentAudio = audio;
 
-  SONG_LINES.forEach((line, i) => {
-    setTimeout(() => {
-      caption.textContent = line;
-      speak(line);
-      elapsed = (i + 1) * lineDuration;
-      fill.style.width = `${(elapsed / totalDuration) * 100}%`;
-    }, i * lineDuration);
+  audio.addEventListener("timeupdate", () => {
+    if (audio.duration) {
+      fill.style.width = `${(audio.currentTime / audio.duration) * 100}%`;
+    }
   });
 
-  setTimeout(() => {
+  const finish = () => {
+    state.currentAudio = null;
     playChime();
     onDone();
-  }, totalDuration + 400);
+  };
+
+  audio.addEventListener("ended", finish);
+  audio.play().catch(() => {
+    // Autoplay blocked; move on after a reasonable fallback delay.
+    setTimeout(finish, 20000);
+  });
 }
 
 function goToNextStep() {
@@ -282,7 +259,6 @@ function renderComplete() {
   app.appendChild(card);
 
   playChime();
-  speak("All done! You're a potty pro!");
 }
 
 function spawnConfetti() {
