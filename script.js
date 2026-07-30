@@ -79,8 +79,6 @@ function render() {
   const step = STEPS[state.stepIndex];
   app.style.background = step.color;
 
-  app.appendChild(buildProgressDots());
-
   const card = document.createElement("div");
   card.className = "step-card";
 
@@ -131,20 +129,6 @@ function render() {
   app.appendChild(card);
 }
 
-function buildProgressDots() {
-  const wrap = document.createElement("div");
-  wrap.className = "progress-dots";
-  STEPS.forEach((s, i) => {
-    const dot = document.createElement("div");
-    dot.className = "dot";
-    if (i === state.stepIndex) dot.classList.add("active");
-    else if (i < state.stepIndex) dot.classList.add("done");
-    wrap.appendChild(dot);
-  });
-  app.appendChild(wrap);
-  return document.createDocumentFragment();
-}
-
 function handleStepComplete(emojiEl, card) {
   const button = document.getElementById("action-button");
   button.disabled = true;
@@ -175,8 +159,10 @@ function runHandWashSong(onDone) {
   });
 
   const finish = () => {
-    playChime();
-    onDone();
+    setTimeout(() => {
+      playChime();
+      onDone();
+    }, 1500);
   };
 
   audio.addEventListener("ended", finish);
