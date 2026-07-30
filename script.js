@@ -6,31 +6,26 @@ const STEPS = [
   {
     id: "potty",
     title: "Potty Time",
-    instruction: "Sit down and go potty!",
     emoji: "\u{1F6BD}",
   },
   {
     id: "wipe",
     title: "Wipe",
-    instruction: "Wipe all nice and clean!",
     emoji: "\u{1F9FB}",
   },
   {
     id: "pantsup",
     title: "Pants Up",
-    instruction: "Pull your pants back up!",
     emoji: "\u{1F456}",
   },
   {
     id: "flush",
     title: "Flush",
-    instruction: "Push the handle to flush!",
     emoji: "\u{1F6BD}",
   },
   {
     id: "washhands",
     title: "Wash Hands",
-    instruction: "Wash your hands with the song!",
     emoji: "\u{1F9FC}",
     isSong: true,
   },
@@ -81,17 +76,12 @@ function render() {
   emoji.textContent = step.emoji;
   card.appendChild(emoji);
 
-  const title = document.createElement("h1");
-  title.className = "step-title";
-  title.textContent = step.title;
-  card.appendChild(title);
-
-  const instruction = document.createElement("p");
-  instruction.className = "step-instruction";
-  instruction.textContent = step.instruction;
-  card.appendChild(instruction);
-
   if (step.isSong) {
+    const title = document.createElement("h1");
+    title.className = "step-title";
+    title.textContent = step.title;
+    card.appendChild(title);
+
     const caption = document.createElement("div");
     caption.className = "song-caption";
     caption.id = "song-caption";
@@ -115,7 +105,7 @@ function render() {
 
   const button = document.createElement("button");
   button.className = "big-button";
-  button.textContent = "I Did It!";
+  button.textContent = `${step.title}!`;
   button.id = "action-button";
   button.addEventListener("click", () => handleStepComplete(emoji, card));
   card.appendChild(button);
