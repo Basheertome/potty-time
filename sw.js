@@ -1,4 +1,4 @@
-const CACHE_NAME = "potty-time-v3";
+const CACHE_NAME = "potty-time-v4";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -11,6 +11,8 @@ const APP_SHELL = [
   "./icons/icon-maskable-512.png",
   "./audio/handwash-song.mp3",
   "./images/bg-pond.png",
+  "./images/pond-button.png",
+  "./images/pond-button-reflection.png",
 ];
 
 self.addEventListener("install", (event) => {

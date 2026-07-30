@@ -16,23 +16,31 @@ html, body {
   overscroll-behavior: none;
   touch-action: manipulation;
   font-family: "Baloo 2", "Comic Sans MS", "Trebuchet MS", sans-serif;
-  background: #222;
 }
 
+body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #bae6ea;
+}
+
+/* Locked to the artwork's own canvas ratio so the button and its water
+   reflection (drawn at fixed coordinates on that canvas) always land in
+   the same spot, regardless of the device's actual aspect ratio. */
 #app {
   position: relative;
-  height: 100vh;
-  width: 100vw;
+  width: min(100vw, 100vh * 853 / 1844);
+  height: min(100vh, 100vw * 1844 / 853);
   overflow: hidden;
-  display: flex;
   background-image: url("images/bg-pond.png");
-  background-size: cover;
-  background-position: center;
+  background-size: 100% 100%;
   background-repeat: no-repeat;
 }
 
 .step-card {
-  flex: 1;
+  position: absolute;
+  inset: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -40,6 +48,13 @@ html, body {
   gap: 18px;
   padding: 70px 24px 40px;
   text-align: center;
+  z-index: 3;
+}
+
+.step-card.has-button {
+  bottom: 54.28%;
+  justify-content: center;
+  padding: 40px 24px 0;
 }
 
 .step-emoji {
@@ -74,30 +89,68 @@ html, body {
   max-width: 480px;
 }
 
-.big-button {
-  margin-top: 12px;
-  min-width: 260px;
-  min-height: 110px;
-  padding: 18px 40px;
-  font-size: clamp(1.6rem, 6vw, 2.4rem);
-  font-weight: 800;
+.pond-reflection {
+  position: absolute;
+  left: 9.26%;
+  top: 51.95%;
+  width: 81.36%;
+  height: 23.1%;
+  background-image: url("images/pond-button-reflection.png");
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  pointer-events: none;
+  transform-origin: 50% 20%;
+  z-index: 1;
+}
+
+.pond-button {
+  position: absolute;
+  left: 18.76%;
+  top: 45.72%;
+  width: 62.49%;
+  height: 26.41%;
   border: none;
-  border-radius: 100px;
-  background: #ff8fab;
+  background-color: transparent;
+  background-image: url("images/pond-button.png");
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 10% 12%;
+  font-size: clamp(1.3rem, 5.2vw, 2.1rem);
+  font-weight: 800;
   color: #fff;
-  box-shadow: 0 10px 0 rgba(0, 0, 0, 0.12), 0 14px 26px rgba(0, 0, 0, 0.18);
+  text-shadow: 0 2px 5px rgba(0, 0, 0, 0.35);
   cursor: pointer;
-  transition: transform 0.08s ease, box-shadow 0.08s ease;
+  z-index: 2;
 }
 
-.big-button:active {
-  transform: translateY(8px);
-  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.12), 0 6px 14px rgba(0, 0, 0, 0.18);
-}
-
-.big-button:disabled {
-  opacity: 0.7;
+.pond-button:disabled {
   cursor: default;
+}
+
+.pond-button.bobble {
+  animation: bobble 1.1s ease;
+}
+
+.pond-reflection.ripple {
+  animation: ripple 1.1s ease;
+}
+
+@keyframes bobble {
+  0% { transform: translateY(0) rotate(0deg); }
+  15% { transform: translateY(9%) rotate(-3deg); }
+  35% { transform: translateY(-6%) rotate(3deg); }
+  55% { transform: translateY(5%) rotate(-2deg); }
+  75% { transform: translateY(-3%) rotate(1deg); }
+  100% { transform: translateY(0) rotate(0deg); }
+}
+
+@keyframes ripple {
+  0%, 100% { transform: scale(1, 1); opacity: 1; }
+  30% { transform: scale(1.08, 0.9); opacity: 0.85; }
+  60% { transform: scale(0.95, 1.05); opacity: 1; }
 }
 
 .yay-pop {
@@ -155,7 +208,8 @@ html, body {
 
 /* Completion screen */
 .complete-card {
-  flex: 1;
+  position: absolute;
+  inset: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -163,6 +217,7 @@ html, body {
   gap: 20px;
   text-align: center;
   padding: 40px 24px;
+  z-index: 3;
 }
 
 .confetti {
@@ -170,6 +225,7 @@ html, body {
   top: -10%;
   font-size: 2rem;
   animation: fall linear forwards;
+  z-index: 4;
 }
 
 @keyframes fall {

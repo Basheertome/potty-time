@@ -69,7 +69,7 @@ function render() {
   const step = STEPS[state.stepIndex];
 
   const card = document.createElement("div");
-  card.className = "step-card";
+  card.className = step.isSong ? "step-card" : "step-card has-button";
 
   const emoji = document.createElement("div");
   emoji.className = "step-emoji";
@@ -103,21 +103,27 @@ function render() {
     return;
   }
 
+  app.appendChild(card);
+
+  const reflection = document.createElement("div");
+  reflection.className = "pond-reflection";
+  reflection.id = "pond-reflection";
+  app.appendChild(reflection);
+
   const button = document.createElement("button");
-  button.className = "big-button";
+  button.className = "pond-button";
   button.textContent = `${step.title}!`;
   button.id = "action-button";
-  button.addEventListener("click", () => handleStepComplete(emoji, card));
-  card.appendChild(button);
-
-  app.appendChild(card);
+  button.addEventListener("click", () => handleStepComplete(emoji, card, button, reflection));
+  app.appendChild(button);
 }
 
-function handleStepComplete(emojiEl, card) {
-  const button = document.getElementById("action-button");
+function handleStepComplete(emojiEl, card, button, reflection) {
   button.disabled = true;
 
   emojiEl.classList.add("bounce");
+  button.classList.add("bobble");
+  reflection.classList.add("ripple");
   playChime();
   showYay(card);
 
