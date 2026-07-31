@@ -41,6 +41,7 @@ const state = {
 };
 
 const app = document.getElementById("app");
+const canvas = document.getElementById("canvas");
 
 function playChime() {
   try {
@@ -234,7 +235,7 @@ function startFrogCroak() {
   img.className = "frog-anim";
   applyFrogBox(img, FROG_CROAK_FRAMES[0].box);
   img.src = FROG_CROAK_FRAMES[0].src;
-  app.appendChild(img);
+  canvas.appendChild(img);
   croakImgEl = img;
 
   let seqIndex = 0;
@@ -264,7 +265,7 @@ function startFrogJumpAway() {
   img.className = "frog-anim";
   applyFrogBox(img, FROG_JUMP_FRAMES[0].box);
   img.src = FROG_JUMP_FRAMES[0].src;
-  app.appendChild(img);
+  canvas.appendChild(img);
 
   let i = 0;
   const step = () => {
@@ -288,12 +289,12 @@ function startFrogJumpAway() {
 }
 
 function render() {
-  app.innerHTML = "";
+  canvas.innerHTML = "";
   if (state.finished) {
     renderComplete();
     return;
   }
-  app.classList.remove("no-frog");
+  canvas.classList.remove("no-frog");
   const step = STEPS[state.stepIndex];
 
   if (step.waitingMusic) {
@@ -314,16 +315,16 @@ function render() {
   card.appendChild(emoji);
 
   if (step.isSong) {
-    app.appendChild(card);
+    canvas.appendChild(card);
 
     const reflection = document.createElement("div");
     reflection.className = "pond-reflection";
-    app.appendChild(reflection);
+    canvas.appendChild(reflection);
 
     const button = document.createElement("div");
     button.className = "pond-button static";
     button.textContent = "\u{1F3B5} Wash your hands! \u{1F3B5}";
-    app.appendChild(button);
+    canvas.appendChild(button);
 
     const track = document.createElement("div");
     track.className = "song-progress-track";
@@ -331,26 +332,26 @@ function render() {
     fill.className = "song-progress-fill";
     fill.id = "song-progress-fill";
     track.appendChild(fill);
-    app.appendChild(track);
+    canvas.appendChild(track);
 
     emoji.classList.add("bubble-bob");
     runHandWashSong(() => goToNextStep());
     return;
   }
 
-  app.appendChild(card);
+  canvas.appendChild(card);
 
   const reflection = document.createElement("div");
   reflection.className = "pond-reflection";
   reflection.id = "pond-reflection";
-  app.appendChild(reflection);
+  canvas.appendChild(reflection);
 
   const button = document.createElement("button");
   button.className = "pond-button";
   button.textContent = step.title;
   button.id = "action-button";
   button.addEventListener("click", () => handleStepComplete(step, emoji, card, button, reflection));
-  app.appendChild(button);
+  canvas.appendChild(button);
 
   if (step.frogCroak) {
     startFrogCroak();
@@ -388,7 +389,7 @@ function spawnWashBubble() {
   bubble.style.fontSize = `${size}rem`;
   bubble.style.left = `${4 + Math.random() * 92}%`;
   bubble.style.top = `${10 + Math.random() * 78}%`;
-  app.appendChild(bubble);
+  canvas.appendChild(bubble);
   return bubble;
 }
 
@@ -448,7 +449,7 @@ function goToNextStep() {
 }
 
 function renderComplete() {
-  app.classList.add("no-frog");
+  canvas.classList.add("no-frog");
   spawnConfetti();
 
   const card = document.createElement("div");
@@ -469,7 +470,7 @@ function renderComplete() {
   instruction.textContent = "You did it!";
   card.appendChild(instruction);
 
-  app.appendChild(card);
+  canvas.appendChild(card);
 
   playChime();
   startFrogJumpAway();

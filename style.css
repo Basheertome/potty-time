@@ -25,14 +25,29 @@ body {
   justify-content: center;
 }
 
-/* Locked to the artwork's own canvas ratio so the button and its water
-   reflection (drawn at fixed coordinates on that canvas) always land in
-   the same spot, regardless of the device's actual aspect ratio. */
+/* Fills the whole screen edge-to-edge, no letterbox bars - clips
+   whatever of #canvas overhangs its edges. */
 #app {
   position: relative;
-  width: min(100vw, 100vh * 853 / 1844);
-  height: min(100vh, 100vw * 1844 / 853);
+  width: 100vw;
+  height: 100vh;
   overflow: hidden;
+}
+
+/* Always kept at the artwork's own 853:1844 ratio and scaled up with
+   max() so it fully covers #app on any device aspect ratio (the same
+   effect as background-size:cover), then centered - the overshoot on
+   one axis is what #app's overflow:hidden clips. Because this element
+   itself never distorts, every overlay positioned as a percentage of
+   it (button, reflection, frog, progress bar) stays perfectly
+   registered with the art regardless of screen shape. */
+#canvas {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: max(100vw, 100vh * 853 / 1844);
+  height: max(100vh, 100vw * 1844 / 853);
+  transform: translate(-50%, -50%);
   background-image: url("images/bg-pond.png");
   background-size: 100% 100%;
   background-repeat: no-repeat;
@@ -42,7 +57,7 @@ body {
    uses a background variant with the baked-in frog painted out (leaving
    just the empty rock) instead of the normal background - otherwise the
    original static frog would still show through once the overlay hops off. */
-#app.no-frog {
+#canvas.no-frog {
   background-image: url("images/bg-pond-no-frog.png");
 }
 
