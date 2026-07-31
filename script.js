@@ -1,6 +1,8 @@
 // Potty Time - toddler step-by-step checklist
 
 const HANDWASH_AUDIO_SRC = "audio/handwash-song.mp3";
+const WIPE_FX_SRC = "audio/wipe-fx.mp3";
+const FLUSH_FX_SRC = "audio/flush-fx.mp3";
 
 const STEPS = [
   {
@@ -13,7 +15,7 @@ const STEPS = [
     id: "wipe",
     title: "Let's Wipe",
     emoji: "\u{1F9FB}",
-    sound: "sparkle",
+    sound: "wipe",
   },
   {
     id: "pantsup",
@@ -24,7 +26,7 @@ const STEPS = [
     id: "flush",
     title: "Time to Flush!",
     emoji: "\u{1F6BD}",
-    sound: "swoosh",
+    sound: "flush",
   },
   {
     id: "washhands",
@@ -64,65 +66,20 @@ function playChime() {
   }
 }
 
-function playSparkleChime() {
+function playClip(src) {
   try {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    const notes = [1046.5, 1318.5, 1568, 2093, 1568, 1318.5];
-    notes.forEach((freq, i) => {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = "sine";
-      osc.frequency.value = freq * (1 + (Math.random() - 0.5) * 0.02);
-      const t = ctx.currentTime + i * 0.07;
-      gain.gain.setValueAtTime(0.0001, t);
-      gain.gain.linearRampToValueAtTime(0.16, t + 0.015);
-      gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.18);
-      osc.connect(gain).connect(ctx.destination);
-      osc.start(t);
-      osc.stop(t + 0.2);
-    });
-    setTimeout(() => ctx.close(), 700);
+    const audio = new Audio(src);
+    audio.play().catch(() => {});
   } catch (e) {
-    // Web Audio unsupported; silently skip
-  }
-}
-
-function playSwoosh() {
-  try {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    const duration = 0.55;
-    const bufferSize = Math.floor(ctx.sampleRate * duration);
-    const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-    const data = buffer.getChannelData(0);
-    for (let i = 0; i < bufferSize; i++) {
-      data[i] = Math.random() * 2 - 1;
-    }
-    const noise = ctx.createBufferSource();
-    noise.buffer = buffer;
-
-    const filter = ctx.createBiquadFilter();
-    filter.type = "lowpass";
-    filter.frequency.setValueAtTime(3200, ctx.currentTime);
-    filter.frequency.exponentialRampToValueAtTime(200, ctx.currentTime + duration);
-
-    const gain = ctx.createGain();
-    gain.gain.setValueAtTime(0.35, ctx.currentTime);
-    gain.gain.linearRampToValueAtTime(0.0001, ctx.currentTime + duration);
-
-    noise.connect(filter).connect(gain).connect(ctx.destination);
-    noise.start();
-    noise.stop(ctx.currentTime + duration);
-    setTimeout(() => ctx.close(), duration * 1000 + 200);
-  } catch (e) {
-    // Web Audio unsupported; silently skip
+    // Audio unsupported; silently skip
   }
 }
 
 function playStepSound(step) {
-  if (step.sound === "sparkle") {
-    playSparkleChime();
-  } else if (step.sound === "swoosh") {
-    playSwoosh();
+  if (step.sound === "wipe") {
+    playClip(WIPE_FX_SRC);
+  } else if (step.sound === "flush") {
+    playClip(FLUSH_FX_SRC);
   } else {
     playChime();
   }
