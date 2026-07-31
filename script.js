@@ -209,7 +209,7 @@ function render() {
   }
 
   const card = document.createElement("div");
-  card.className = step.isSong ? "step-card" : "step-card has-button";
+  card.className = "step-card has-button";
 
   const emoji = document.createElement("div");
   emoji.className = "step-emoji";
@@ -217,16 +217,16 @@ function render() {
   card.appendChild(emoji);
 
   if (step.isSong) {
-    const title = document.createElement("h1");
-    title.className = "step-title";
-    title.textContent = step.title;
-    card.appendChild(title);
+    app.appendChild(card);
 
-    const caption = document.createElement("div");
-    caption.className = "song-caption";
-    caption.id = "song-caption";
-    caption.textContent = "\u{1F3B5} Wash your hands! \u{1F3B5}";
-    card.appendChild(caption);
+    const reflection = document.createElement("div");
+    reflection.className = "pond-reflection";
+    app.appendChild(reflection);
+
+    const button = document.createElement("div");
+    button.className = "pond-button static";
+    button.textContent = "\u{1F3B5} Wash your hands! \u{1F3B5}";
+    app.appendChild(button);
 
     const track = document.createElement("div");
     track.className = "song-progress-track";
@@ -234,9 +234,7 @@ function render() {
     fill.className = "song-progress-fill";
     fill.id = "song-progress-fill";
     track.appendChild(fill);
-    card.appendChild(track);
-
-    app.appendChild(card);
+    app.appendChild(track);
 
     emoji.classList.add("bubble-bob");
     runHandWashSong(() => goToNextStep());
