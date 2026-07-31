@@ -16,13 +16,13 @@ html, body {
   overscroll-behavior: none;
   touch-action: manipulation;
   font-family: "Baloo 2", "Comic Sans MS", "Trebuchet MS", sans-serif;
+  background: #bae6ea;
 }
 
 body {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #bae6ea;
 }
 
 /* Locked to the artwork's own canvas ratio so the button and its water
