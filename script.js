@@ -1,4 +1,4 @@
-// Potty Time - toddler step-by-step checklist
+// Froggy Timer - toddler step-by-step checklist
 
 const HANDWASH_AUDIO_SRC = "audio/handwash-song.mp3";
 const WIPE_FX_SRC = "audio/wipe-fx.mp3";

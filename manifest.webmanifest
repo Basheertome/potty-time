@@ -1,6 +1,6 @@
 {
-  "name": "Potty Time",
-  "short_name": "Potty Time",
+  "name": "Froggy Timer",
+  "short_name": "Froggy Timer",
   "description": "A step-by-step potty checklist for toddlers.",
   "start_url": "./index.html",
   "scope": "./",
