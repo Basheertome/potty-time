@@ -3,6 +3,9 @@
 const HANDWASH_AUDIO_SRC = "audio/handwash-song.mp3";
 const WIPE_FX_SRC = "audio/wipe-fx.mp3";
 const FLUSH_FX_SRC = "audio/flush-fx.mp3";
+const POTTY_WAIT_AUDIO_SRC = "audio/potty-wait.mp3";
+const WAITING_MUSIC_TARGET_VOLUME = 0.6;
+const WAITING_MUSIC_FADE_MS = 2500;
 
 const STEPS = [
   {
@@ -85,64 +88,55 @@ function playStepSound(step) {
   }
 }
 
-let waitingMusicCtx = null;
+let waitingMusicAudio = null;
 let waitingMusicActive = false;
-let waitingMusicTimeoutId = null;
+let waitingMusicFadeIntervalId = null;
 let waitingMusicUnlockAttached = false;
 
 function stopWaitingMusic() {
   waitingMusicActive = false;
-  if (waitingMusicTimeoutId) {
-    clearTimeout(waitingMusicTimeoutId);
-    waitingMusicTimeoutId = null;
+  if (waitingMusicFadeIntervalId) {
+    clearInterval(waitingMusicFadeIntervalId);
+    waitingMusicFadeIntervalId = null;
   }
-  if (waitingMusicCtx) {
-    const ctx = waitingMusicCtx;
-    waitingMusicCtx = null;
-    ctx.close().catch(() => {});
+  if (waitingMusicAudio) {
+    waitingMusicAudio.pause();
+    waitingMusicAudio.currentTime = 0;
   }
 }
 
 function startWaitingMusic() {
   const step = STEPS[state.stepIndex];
   if (!step || !step.waitingMusic) return;
-
-  if (!waitingMusicCtx) {
-    try {
-      waitingMusicCtx = new (window.AudioContext || window.webkitAudioContext)();
-    } catch (e) {
-      return;
-    }
-  }
-  const ctx = waitingMusicCtx;
-  ctx.resume().catch(() => {});
-
   if (waitingMusicActive) return;
   waitingMusicActive = true;
 
-  const notes = [523.25, 659.25, 783.99, 659.25];
-  const noteDuration = 0.42;
-  const loopGap = 0.3;
+  if (!waitingMusicAudio) {
+    waitingMusicAudio = new Audio(POTTY_WAIT_AUDIO_SRC);
+    waitingMusicAudio.loop = true;
+  }
+  const audio = waitingMusicAudio;
+  audio.volume = 0;
 
-  const playLoop = () => {
-    if (!waitingMusicActive || waitingMusicCtx !== ctx) return;
-    notes.forEach((freq, i) => {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = "triangle";
-      osc.frequency.value = freq;
-      const t = ctx.currentTime + i * noteDuration;
-      gain.gain.setValueAtTime(0.0001, t);
-      gain.gain.linearRampToValueAtTime(0.12, t + 0.03);
-      gain.gain.exponentialRampToValueAtTime(0.0001, t + noteDuration * 0.9);
-      osc.connect(gain).connect(ctx.destination);
-      osc.start(t);
-      osc.stop(t + noteDuration);
+  audio
+    .play()
+    .then(() => {
+      const steps = 30;
+      const stepMs = WAITING_MUSIC_FADE_MS / steps;
+      let i = 0;
+      if (waitingMusicFadeIntervalId) clearInterval(waitingMusicFadeIntervalId);
+      waitingMusicFadeIntervalId = setInterval(() => {
+        i += 1;
+        audio.volume = Math.min(WAITING_MUSIC_TARGET_VOLUME, (i / steps) * WAITING_MUSIC_TARGET_VOLUME);
+        if (i >= steps) {
+          clearInterval(waitingMusicFadeIntervalId);
+          waitingMusicFadeIntervalId = null;
+        }
+      }, stepMs);
+    })
+    .catch(() => {
+      waitingMusicActive = false;
     });
-    const totalMs = (notes.length * noteDuration + loopGap) * 1000;
-    waitingMusicTimeoutId = setTimeout(playLoop, totalMs);
-  };
-  playLoop();
 }
 
 function ensureWaitingMusicUnlock() {
