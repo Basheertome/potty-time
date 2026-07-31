@@ -23,12 +23,12 @@ const STEPS = [
   {
     id: "pantsup",
     title: "Pull up your pants!",
-    emoji: "\u{1F456}",
+    emoji: "\u{1FA72}",
   },
   {
     id: "flush",
     title: "Time to Flush!",
-    emoji: "\u{1F6BD}",
+    emoji: "\u{1F300}",
     sound: "flush",
   },
   {
@@ -283,20 +283,21 @@ function showYay(card) {
   setTimeout(() => yay.remove(), 1400);
 }
 
-const BUBBLE_SPAWN_INTERVAL_MS = 130;
+const BUBBLE_SPAWN_INTERVAL_MS = 450;
+const MAX_ACTIVE_BUBBLES = 16;
+const BUBBLE_MIN_LIFETIME_MS = 3500;
+const BUBBLE_MAX_LIFETIME_MS = 7500;
 
-function spawnWashBubble(fillProgress) {
+function spawnWashBubble() {
   const wrap = document.createElement("div");
   wrap.className = "wash-bubble-wrap";
 
-  // Pile line rises from near the bottom to near the top as the song
-  // progresses, with jitter so bubbles look stacked rather than in a
-  // perfectly flat row.
-  const pileTop = 92 - fillProgress * 84;
-  const top = Math.max(2, pileTop + (Math.random() - 0.5) * 14);
+  // Scattered across most of the vertical space so bubbles read as a
+  // loose floating cloud rather than a solid pile of suds.
+  const top = 10 + Math.random() * 76;
   wrap.style.top = `${top}%`;
 
-  const size = (1.6 + Math.random() * 2.2) * 3;
+  const size = (1.6 + Math.random() * 2.2) * 1.8;
   wrap.style.width = `${size}rem`;
   wrap.style.height = `${size}rem`;
 
@@ -320,38 +321,52 @@ function spawnWashBubble(fillProgress) {
   return wrap;
 }
 
-function popAllWashBubbles(bubbles) {
+function popWashBubble(wrap) {
+  const img = wrap.querySelector(".wash-bubble");
+  if (img) img.classList.add("pop");
+  setTimeout(() => wrap.remove(), 320);
+}
+
+function popAllWashBubbles(entries) {
   const spread = 900;
-  bubbles.forEach((wrap, i) => {
-    const delay = (i / Math.max(bubbles.length, 1)) * spread + Math.random() * 60;
-    setTimeout(() => {
-      const img = wrap.querySelector(".wash-bubble");
-      if (img) img.classList.add("pop");
-      setTimeout(() => wrap.remove(), 320);
-    }, delay);
+  entries.forEach((entry, i) => {
+    const delay = (i / Math.max(entries.length, 1)) * spread + Math.random() * 60;
+    setTimeout(() => popWashBubble(entry.wrap), delay);
   });
 }
 
 function runHandWashSong(step, emojiEl, card, staticButton, reflection) {
   const fill = document.getElementById("song-progress-fill");
   const audio = new Audio(HANDWASH_AUDIO_SRC);
-  const bubbles = [];
-  let progress = 0;
+  const bubbles = []; // active { wrap, timeoutId } entries
   let spawnIntervalId = null;
 
   audio.addEventListener("timeupdate", () => {
     if (audio.duration) {
-      progress = audio.currentTime / audio.duration;
-      fill.style.width = `${progress * 100}%`;
+      fill.style.width = `${(audio.currentTime / audio.duration) * 100}%`;
     }
   });
+
+  const spawnLoopBubble = () => {
+    if (bubbles.length >= MAX_ACTIVE_BUBBLES) return;
+    const wrap = spawnWashBubble();
+    const entry = { wrap, timeoutId: null };
+    const lifetime = BUBBLE_MIN_LIFETIME_MS + Math.random() * (BUBBLE_MAX_LIFETIME_MS - BUBBLE_MIN_LIFETIME_MS);
+    entry.timeoutId = setTimeout(() => {
+      const idx = bubbles.indexOf(entry);
+      if (idx !== -1) bubbles.splice(idx, 1);
+      popWashBubble(wrap);
+    }, lifetime);
+    bubbles.push(entry);
+  };
 
   const finish = () => {
     if (spawnIntervalId) {
       clearInterval(spawnIntervalId);
       spawnIntervalId = null;
     }
-    popAllWashBubbles(bubbles);
+    bubbles.forEach((entry) => clearTimeout(entry.timeoutId));
+    popAllWashBubbles(bubbles.splice(0));
     setTimeout(() => {
       emojiEl.classList.remove("bubble-bob");
       const button = document.createElement("button");
@@ -367,10 +382,8 @@ function runHandWashSong(step, emojiEl, card, staticButton, reflection) {
   audio
     .play()
     .then(() => {
-      bubbles.push(spawnWashBubble(progress));
-      spawnIntervalId = setInterval(() => {
-        bubbles.push(spawnWashBubble(progress));
-      }, BUBBLE_SPAWN_INTERVAL_MS);
+      spawnLoopBubble();
+      spawnIntervalId = setInterval(spawnLoopBubble, BUBBLE_SPAWN_INTERVAL_MS);
     })
     .catch(() => {
       // Autoplay blocked; move on after a reasonable fallback delay.
@@ -412,6 +425,17 @@ function renderComplete() {
   canvas.appendChild(card);
 
   playChime();
+
+  app.addEventListener(
+    "click",
+    () => {
+      state.started = false;
+      state.finished = false;
+      state.stepIndex = 0;
+      render();
+    },
+    { once: true }
+  );
 }
 
 function spawnConfetti() {
