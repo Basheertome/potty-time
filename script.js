@@ -194,7 +194,7 @@ function render() {
     canvas.appendChild(track);
 
     emoji.classList.add("bubble-bob");
-    runHandWashSong(() => goToNextStep());
+    runHandWashSong(step, emoji, card, button, reflection);
     return;
   }
 
@@ -283,7 +283,7 @@ function popAllWashBubbles(bubbles) {
   });
 }
 
-function runHandWashSong(onDone) {
+function runHandWashSong(step, emojiEl, card, staticButton, reflection) {
   const fill = document.getElementById("song-progress-fill");
   const audio = new Audio(HANDWASH_AUDIO_SRC);
   const bubbles = [];
@@ -304,8 +304,13 @@ function runHandWashSong(onDone) {
     }
     popAllWashBubbles(bubbles);
     setTimeout(() => {
-      playChime();
-      onDone();
+      emojiEl.classList.remove("bubble-bob");
+      const button = document.createElement("button");
+      button.className = "pond-button";
+      button.textContent = "All Clean!";
+      button.id = "action-button";
+      staticButton.replaceWith(button);
+      button.addEventListener("click", () => handleStepComplete(step, emojiEl, card, button, reflection));
     }, 1800);
   };
 
