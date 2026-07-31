@@ -245,12 +245,17 @@ function spawnWashBubble(fillProgress) {
   // perfectly flat row.
   const pileTop = 92 - fillProgress * 84;
   const top = Math.max(2, pileTop + (Math.random() - 0.5) * 14);
-  wrap.style.left = `${2 + Math.random() * 96}%`;
   wrap.style.top = `${top}%`;
 
   const size = (1.6 + Math.random() * 2.2) * 3;
   wrap.style.width = `${size}rem`;
   wrap.style.height = `${size}rem`;
+
+  // Center-based horizontal placement (offset by half the bubble's own
+  // size) so bubbles near the edges still bleed past x=0%/100% instead
+  // of leaving a gap between their edge and the screen edge.
+  const centerPercent = Math.random() * 100;
+  wrap.style.left = `calc(${centerPercent}% - ${size / 2}rem)`;
 
   wrap.style.setProperty("--drift-x", `${(Math.random() - 0.5) * 18}px`);
   wrap.style.setProperty("--drift-y", `${-6 - Math.random() * 12}px`);
