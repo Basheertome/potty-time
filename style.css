@@ -38,6 +38,23 @@ body {
   background-repeat: no-repeat;
 }
 
+/* Completion screen: the frog animates jumping away from its spot, so it
+   uses a background variant with the baked-in frog painted out (leaving
+   just the empty rock) instead of the normal background - otherwise the
+   original static frog would still show through once the overlay hops off. */
+#app.no-frog {
+  background-image: url("images/bg-pond-no-frog.png");
+}
+
+/* Overlaid on top of the background's baked-in frog so it can be animated
+   independently, without disturbing the frog on every other screen. */
+.frog-anim {
+  position: absolute;
+  z-index: 2;
+  pointer-events: none;
+  transition: left 0.28s ease, top 0.28s ease, opacity 0.4s ease;
+}
+
 .step-card {
   position: absolute;
   inset: 0;

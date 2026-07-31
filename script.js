@@ -8,6 +8,7 @@ const STEPS = [
     title: "Time for Potty!",
     emoji: "\u{1F6BD}",
     waitingMusic: true,
+    frogCroak: true,
   },
   {
     id: "wipe",
@@ -193,12 +194,106 @@ function ensureWaitingMusicUnlock() {
   document.addEventListener("pointerdown", () => startWaitingMusic(), { once: true });
 }
 
+// Percent boxes (of #app's locked aspect-ratio canvas) registering each
+// overlay frame over the frog baked into bg-pond.png, so it can be
+// animated without disturbing the frog on every other screen.
+const FROG_CROAK_BOX = { left: -0.9, top: 25.2, width: 40, height: 18.2 };
+const FROG_CROAK_FRAMES = [
+  { src: "images/frog-croak-0.png", box: FROG_CROAK_BOX },
+  { src: "images/frog-croak-1.png", box: FROG_CROAK_BOX },
+  { src: "images/frog-croak-2.png", box: FROG_CROAK_BOX },
+  { src: "images/frog-croak-3.png", box: FROG_CROAK_BOX },
+];
+const FROG_CROAK_SEQUENCE = [
+  { frame: 0, hold: 4500 },
+  { frame: 1, hold: 180 },
+  { frame: 2, hold: 260 },
+  { frame: 3, hold: 4500 },
+];
+
+let croakTimeoutId = null;
+let croakImgEl = null;
+
+function stopFrogCroak() {
+  if (croakTimeoutId) {
+    clearTimeout(croakTimeoutId);
+    croakTimeoutId = null;
+  }
+  croakImgEl = null;
+}
+
+function applyFrogBox(img, box) {
+  img.style.left = `${box.left}%`;
+  img.style.top = `${box.top}%`;
+  img.style.width = `${box.width}%`;
+  img.style.height = `${box.height}%`;
+}
+
+function startFrogCroak() {
+  const img = document.createElement("img");
+  img.className = "frog-anim";
+  applyFrogBox(img, FROG_CROAK_FRAMES[0].box);
+  img.src = FROG_CROAK_FRAMES[0].src;
+  app.appendChild(img);
+  croakImgEl = img;
+
+  let seqIndex = 0;
+  const tick = () => {
+    if (!croakImgEl) return;
+    const step = FROG_CROAK_SEQUENCE[seqIndex];
+    const frame = FROG_CROAK_FRAMES[step.frame];
+    croakImgEl.src = frame.src;
+    applyFrogBox(croakImgEl, frame.box);
+    seqIndex = (seqIndex + 1) % FROG_CROAK_SEQUENCE.length;
+    croakTimeoutId = setTimeout(tick, step.hold);
+  };
+  tick();
+}
+
+const FROG_JUMP_FRAMES = [
+  { src: "images/frog-jump-0.png", box: { left: 2.9, top: 28.2, width: 32.2, height: 15.2 }, hold: 350 },
+  { src: "images/frog-jump-1.png", box: { left: 3.0, top: 28.1, width: 32.0, height: 15.2 }, hold: 450 },
+  { src: "images/frog-jump-2.png", box: { left: 2.9, top: 29.0, width: 32.2, height: 14.4 }, hold: 220 },
+  { src: "images/frog-jump-3.png", box: { left: 2.9, top: 16.9, width: 49.1, height: 26.5 }, hold: 260 },
+  { src: "images/frog-jump-4.png", box: { left: 17.0, top: 8.2, width: 60.4, height: 25.5 }, hold: 320 },
+];
+const FROG_JUMP_EXIT_BOX = { left: 130, top: -35, width: 60.4, height: 25.5 };
+
+function startFrogJumpAway() {
+  const img = document.createElement("img");
+  img.className = "frog-anim";
+  applyFrogBox(img, FROG_JUMP_FRAMES[0].box);
+  img.src = FROG_JUMP_FRAMES[0].src;
+  app.appendChild(img);
+
+  let i = 0;
+  const step = () => {
+    if (!img.isConnected) return;
+    const frame = FROG_JUMP_FRAMES[i];
+    img.src = frame.src;
+    applyFrogBox(img, frame.box);
+    i += 1;
+    if (i < FROG_JUMP_FRAMES.length) {
+      setTimeout(step, frame.hold);
+    } else {
+      setTimeout(() => {
+        img.style.transition = "left 0.6s ease-out, top 0.6s ease-out, opacity 0.6s ease-out 0.2s";
+        applyFrogBox(img, FROG_JUMP_EXIT_BOX);
+        img.style.opacity = "0";
+        setTimeout(() => img.remove(), 900);
+      }, frame.hold);
+    }
+  };
+  step();
+}
+
 function render() {
   app.innerHTML = "";
   if (state.finished) {
     renderComplete();
     return;
   }
+  app.classList.remove("no-frog");
   const step = STEPS[state.stepIndex];
 
   if (step.waitingMusic) {
@@ -207,6 +302,8 @@ function render() {
   } else {
     stopWaitingMusic();
   }
+
+  stopFrogCroak();
 
   const card = document.createElement("div");
   card.className = "step-card has-button";
@@ -254,6 +351,10 @@ function render() {
   button.id = "action-button";
   button.addEventListener("click", () => handleStepComplete(step, emoji, card, button, reflection));
   app.appendChild(button);
+
+  if (step.frogCroak) {
+    startFrogCroak();
+  }
 }
 
 function handleStepComplete(step, emojiEl, card, button, reflection) {
@@ -347,6 +448,7 @@ function goToNextStep() {
 }
 
 function renderComplete() {
+  app.classList.add("no-frog");
   spawnConfetti();
 
   const card = document.createElement("div");
@@ -370,6 +472,7 @@ function renderComplete() {
   app.appendChild(card);
 
   playChime();
+  startFrogJumpAway();
 }
 
 function spawnConfetti() {
