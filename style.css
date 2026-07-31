@@ -39,8 +39,8 @@ body {
    effect as background-size:cover), then centered - the overshoot on
    one axis is what #app's overflow:hidden clips. Because this element
    itself never distorts, every overlay positioned as a percentage of
-   it (button, reflection, frog, progress bar) stays perfectly
-   registered with the art regardless of screen shape. */
+   it (button, reflection, progress bar) stays perfectly registered
+   with the art regardless of screen shape. */
 #canvas {
   position: absolute;
   top: 50%;
@@ -51,23 +51,6 @@ body {
   background-image: url("images/bg-pond.png");
   background-size: 100% 100%;
   background-repeat: no-repeat;
-}
-
-/* Completion screen: the frog animates jumping away from its spot, so it
-   uses a background variant with the baked-in frog painted out (leaving
-   just the empty rock) instead of the normal background - otherwise the
-   original static frog would still show through once the overlay hops off. */
-#canvas.no-frog {
-  background-image: url("images/bg-pond-no-frog.png");
-}
-
-/* Overlaid on top of the background's baked-in frog so it can be animated
-   independently, without disturbing the frog on every other screen. */
-.frog-anim {
-  position: absolute;
-  z-index: 2;
-  pointer-events: none;
-  transition: left 0.28s ease, top 0.28s ease, opacity 0.4s ease;
 }
 
 .step-card {
@@ -165,7 +148,14 @@ body {
 
 .pond-button.static {
   cursor: default;
-  font-size: clamp(1.1rem, 4.8vw, 1.9rem);
+  flex-direction: column;
+  gap: 2px;
+  font-size: clamp(1.9rem, 8vw, 3.2rem);
+  line-height: 1.05;
+}
+
+.pond-button.static div {
+  white-space: nowrap;
 }
 
 .pond-button.bobble {
@@ -238,17 +228,28 @@ body {
   50% { transform: translateY(-10px) scale(1.05); }
 }
 
-.wash-bubble {
+.wash-bubble-wrap {
   position: absolute;
-  line-height: 1;
   z-index: 5;
   pointer-events: none;
+  animation: bubble-float var(--float-dur, 3s) ease-in-out infinite;
+}
+
+.wash-bubble {
+  display: block;
+  width: 100%;
+  height: 100%;
   filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1));
   animation: bubble-in 0.35s ease;
 }
 
 .wash-bubble.pop {
   animation: bubble-pop 0.32s ease forwards;
+}
+
+@keyframes bubble-float {
+  0%, 100% { transform: translate(0, 0); }
+  50% { transform: translate(var(--drift-x, 6px), var(--drift-y, -10px)); }
 }
 
 @keyframes bubble-in {

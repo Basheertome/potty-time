@@ -8,7 +8,6 @@ const STEPS = [
     title: "Time for Potty!",
     emoji: "\u{1F6BD}",
     waitingMusic: true,
-    frogCroak: true,
   },
   {
     id: "wipe",
@@ -195,106 +194,12 @@ function ensureWaitingMusicUnlock() {
   document.addEventListener("pointerdown", () => startWaitingMusic(), { once: true });
 }
 
-// Percent boxes (of #app's locked aspect-ratio canvas) registering each
-// overlay frame over the frog baked into bg-pond.png, so it can be
-// animated without disturbing the frog on every other screen.
-const FROG_CROAK_BOX = { left: -0.9, top: 25.2, width: 40, height: 18.2 };
-const FROG_CROAK_FRAMES = [
-  { src: "images/frog-croak-0.png", box: FROG_CROAK_BOX },
-  { src: "images/frog-croak-1.png", box: FROG_CROAK_BOX },
-  { src: "images/frog-croak-2.png", box: FROG_CROAK_BOX },
-  { src: "images/frog-croak-3.png", box: FROG_CROAK_BOX },
-];
-const FROG_CROAK_SEQUENCE = [
-  { frame: 0, hold: 4500 },
-  { frame: 1, hold: 180 },
-  { frame: 2, hold: 260 },
-  { frame: 3, hold: 4500 },
-];
-
-let croakTimeoutId = null;
-let croakImgEl = null;
-
-function stopFrogCroak() {
-  if (croakTimeoutId) {
-    clearTimeout(croakTimeoutId);
-    croakTimeoutId = null;
-  }
-  croakImgEl = null;
-}
-
-function applyFrogBox(img, box) {
-  img.style.left = `${box.left}%`;
-  img.style.top = `${box.top}%`;
-  img.style.width = `${box.width}%`;
-  img.style.height = `${box.height}%`;
-}
-
-function startFrogCroak() {
-  const img = document.createElement("img");
-  img.className = "frog-anim";
-  applyFrogBox(img, FROG_CROAK_FRAMES[0].box);
-  img.src = FROG_CROAK_FRAMES[0].src;
-  canvas.appendChild(img);
-  croakImgEl = img;
-
-  let seqIndex = 0;
-  const tick = () => {
-    if (!croakImgEl) return;
-    const step = FROG_CROAK_SEQUENCE[seqIndex];
-    const frame = FROG_CROAK_FRAMES[step.frame];
-    croakImgEl.src = frame.src;
-    applyFrogBox(croakImgEl, frame.box);
-    seqIndex = (seqIndex + 1) % FROG_CROAK_SEQUENCE.length;
-    croakTimeoutId = setTimeout(tick, step.hold);
-  };
-  tick();
-}
-
-const FROG_JUMP_FRAMES = [
-  { src: "images/frog-jump-0.png", box: { left: 2.9, top: 28.2, width: 32.2, height: 15.2 }, hold: 350 },
-  { src: "images/frog-jump-1.png", box: { left: 3.0, top: 28.1, width: 32.0, height: 15.2 }, hold: 450 },
-  { src: "images/frog-jump-2.png", box: { left: 2.9, top: 29.0, width: 32.2, height: 14.4 }, hold: 220 },
-  { src: "images/frog-jump-3.png", box: { left: 2.9, top: 16.9, width: 49.1, height: 26.5 }, hold: 260 },
-  { src: "images/frog-jump-4.png", box: { left: 17.0, top: 8.2, width: 60.4, height: 25.5 }, hold: 320 },
-];
-const FROG_JUMP_EXIT_BOX = { left: 130, top: -35, width: 60.4, height: 25.5 };
-
-function startFrogJumpAway() {
-  const img = document.createElement("img");
-  img.className = "frog-anim";
-  applyFrogBox(img, FROG_JUMP_FRAMES[0].box);
-  img.src = FROG_JUMP_FRAMES[0].src;
-  canvas.appendChild(img);
-
-  let i = 0;
-  const step = () => {
-    if (!img.isConnected) return;
-    const frame = FROG_JUMP_FRAMES[i];
-    img.src = frame.src;
-    applyFrogBox(img, frame.box);
-    i += 1;
-    if (i < FROG_JUMP_FRAMES.length) {
-      setTimeout(step, frame.hold);
-    } else {
-      setTimeout(() => {
-        img.style.transition = "left 0.6s ease-out, top 0.6s ease-out, opacity 0.6s ease-out 0.2s";
-        applyFrogBox(img, FROG_JUMP_EXIT_BOX);
-        img.style.opacity = "0";
-        setTimeout(() => img.remove(), 900);
-      }, frame.hold);
-    }
-  };
-  step();
-}
-
 function render() {
   canvas.innerHTML = "";
   if (state.finished) {
     renderComplete();
     return;
   }
-  canvas.classList.remove("no-frog");
   const step = STEPS[state.stepIndex];
 
   if (step.waitingMusic) {
@@ -303,8 +208,6 @@ function render() {
   } else {
     stopWaitingMusic();
   }
-
-  stopFrogCroak();
 
   const card = document.createElement("div");
   card.className = "step-card has-button";
@@ -323,7 +226,12 @@ function render() {
 
     const button = document.createElement("div");
     button.className = "pond-button static";
-    button.textContent = "\u{1F3B5} Wash your hands! \u{1F3B5}";
+    const line1 = document.createElement("div");
+    line1.textContent = "Wash";
+    const line2 = document.createElement("div");
+    line2.textContent = "your hands!";
+    button.appendChild(line1);
+    button.appendChild(line2);
     canvas.appendChild(button);
 
     const track = document.createElement("div");
@@ -352,10 +260,6 @@ function render() {
   button.id = "action-button";
   button.addEventListener("click", () => handleStepComplete(step, emoji, card, button, reflection));
   canvas.appendChild(button);
-
-  if (step.frogCroak) {
-    startFrogCroak();
-  }
 }
 
 function handleStepComplete(step, emojiEl, card, button, reflection) {
@@ -379,27 +283,46 @@ function showYay(card) {
   setTimeout(() => yay.remove(), 1400);
 }
 
-const TOTAL_WASH_BUBBLES = 45;
+const BUBBLE_SPAWN_INTERVAL_MS = 130;
 
-function spawnWashBubble() {
-  const bubble = document.createElement("div");
-  bubble.className = "wash-bubble";
-  bubble.textContent = "\u{1FAE7}";
-  const size = 1.6 + Math.random() * 2.2;
-  bubble.style.fontSize = `${size}rem`;
-  bubble.style.left = `${4 + Math.random() * 92}%`;
-  bubble.style.top = `${10 + Math.random() * 78}%`;
-  canvas.appendChild(bubble);
-  return bubble;
+function spawnWashBubble(fillProgress) {
+  const wrap = document.createElement("div");
+  wrap.className = "wash-bubble-wrap";
+
+  // Pile line rises from near the bottom to near the top as the song
+  // progresses, with jitter so bubbles look stacked rather than in a
+  // perfectly flat row.
+  const pileTop = 92 - fillProgress * 84;
+  const top = Math.max(2, pileTop + (Math.random() - 0.5) * 14);
+  wrap.style.left = `${2 + Math.random() * 96}%`;
+  wrap.style.top = `${top}%`;
+
+  const size = (1.6 + Math.random() * 2.2) * 3;
+  wrap.style.width = `${size}rem`;
+  wrap.style.height = `${size}rem`;
+
+  wrap.style.setProperty("--drift-x", `${(Math.random() - 0.5) * 18}px`);
+  wrap.style.setProperty("--drift-y", `${-6 - Math.random() * 12}px`);
+  wrap.style.setProperty("--float-dur", `${2.4 + Math.random() * 2}s`);
+  wrap.style.animationDelay = `${Math.random() * -3}s`;
+
+  const img = document.createElement("img");
+  img.className = "wash-bubble";
+  img.src = "images/bubble.png";
+  wrap.appendChild(img);
+
+  canvas.appendChild(wrap);
+  return wrap;
 }
 
 function popAllWashBubbles(bubbles) {
-  const spread = 1000;
-  bubbles.forEach((bubble, i) => {
+  const spread = 900;
+  bubbles.forEach((wrap, i) => {
     const delay = (i / Math.max(bubbles.length, 1)) * spread + Math.random() * 60;
     setTimeout(() => {
-      bubble.classList.add("pop");
-      setTimeout(() => bubble.remove(), 320);
+      const img = wrap.querySelector(".wash-bubble");
+      if (img) img.classList.add("pop");
+      setTimeout(() => wrap.remove(), 320);
     }, delay);
   });
 }
@@ -408,22 +331,21 @@ function runHandWashSong(onDone) {
   const fill = document.getElementById("song-progress-fill");
   const audio = new Audio(HANDWASH_AUDIO_SRC);
   const bubbles = [];
-  let bubblesSpawned = 0;
+  let progress = 0;
+  let spawnIntervalId = null;
 
   audio.addEventListener("timeupdate", () => {
     if (audio.duration) {
-      const progress = audio.currentTime / audio.duration;
+      progress = audio.currentTime / audio.duration;
       fill.style.width = `${progress * 100}%`;
-
-      const targetCount = Math.floor(progress * TOTAL_WASH_BUBBLES);
-      while (bubblesSpawned < targetCount) {
-        bubbles.push(spawnWashBubble());
-        bubblesSpawned += 1;
-      }
     }
   });
 
   const finish = () => {
+    if (spawnIntervalId) {
+      clearInterval(spawnIntervalId);
+      spawnIntervalId = null;
+    }
     popAllWashBubbles(bubbles);
     setTimeout(() => {
       playChime();
@@ -432,10 +354,18 @@ function runHandWashSong(onDone) {
   };
 
   audio.addEventListener("ended", finish);
-  audio.play().catch(() => {
-    // Autoplay blocked; move on after a reasonable fallback delay.
-    setTimeout(finish, 20000);
-  });
+  audio
+    .play()
+    .then(() => {
+      bubbles.push(spawnWashBubble(progress));
+      spawnIntervalId = setInterval(() => {
+        bubbles.push(spawnWashBubble(progress));
+      }, BUBBLE_SPAWN_INTERVAL_MS);
+    })
+    .catch(() => {
+      // Autoplay blocked; move on after a reasonable fallback delay.
+      setTimeout(finish, 20000);
+    });
 }
 
 function goToNextStep() {
@@ -449,7 +379,6 @@ function goToNextStep() {
 }
 
 function renderComplete() {
-  canvas.classList.add("no-frog");
   spawnConfetti();
 
   const card = document.createElement("div");
@@ -473,7 +402,6 @@ function renderComplete() {
   canvas.appendChild(card);
 
   playChime();
-  startFrogJumpAway();
 }
 
 function spawnConfetti() {
