@@ -1,4 +1,4 @@
-const CACHE_NAME = "potty-time-v12";
+const CACHE_NAME = "potty-time-v13";
 const APP_SHELL = [
   "./",
   "./index.html",

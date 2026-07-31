@@ -452,4 +452,28 @@ function spawnConfetti() {
   }
 }
 
+let wakeLock = null;
+
+async function requestWakeLock() {
+  if (!("wakeLock" in navigator)) return;
+  try {
+    wakeLock = await navigator.wakeLock.request("screen");
+    wakeLock.addEventListener("release", () => {
+      wakeLock = null;
+    });
+  } catch (e) {
+    // Wake Lock unsupported or denied; the screen may dim/lock normally.
+  }
+}
+
+// The Wake Lock is released automatically whenever the tab/app is hidden
+// (backgrounded, screen locked, etc.), so re-request it every time it
+// becomes visible again to keep the screen awake while actively in use.
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible") {
+    requestWakeLock();
+  }
+});
+
+requestWakeLock();
 render();
