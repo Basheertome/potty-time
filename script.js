@@ -40,6 +40,7 @@ const STEPS = [
 ];
 
 const state = {
+  started: false,
   stepIndex: 0,
   finished: false,
 };
@@ -147,6 +148,10 @@ function ensureWaitingMusicUnlock() {
 
 function render() {
   canvas.innerHTML = "";
+  if (!state.started) {
+    renderStart();
+    return;
+  }
   if (state.finished) {
     renderComplete();
     return;
@@ -210,6 +215,50 @@ function render() {
   button.textContent = step.title;
   button.id = "action-button";
   button.addEventListener("click", () => handleStepComplete(step, emoji, card, button, reflection));
+  canvas.appendChild(button);
+}
+
+function renderStart() {
+  const card = document.createElement("div");
+  card.className = "step-card has-button";
+
+  const emoji = document.createElement("div");
+  emoji.className = "step-emoji";
+  emoji.textContent = "\u{1F438}";
+  card.appendChild(emoji);
+
+  const title = document.createElement("h1");
+  title.className = "step-title";
+  title.textContent = "Froggy Timer";
+  card.appendChild(title);
+
+  const instruction = document.createElement("p");
+  instruction.className = "step-instruction";
+  instruction.textContent = "Let's get started!";
+  card.appendChild(instruction);
+
+  canvas.appendChild(card);
+
+  const reflection = document.createElement("div");
+  reflection.className = "pond-reflection";
+  canvas.appendChild(reflection);
+
+  const button = document.createElement("button");
+  button.className = "pond-button";
+  button.textContent = "Start";
+  button.id = "action-button";
+  button.addEventListener("click", () => {
+    button.disabled = true;
+    emoji.classList.add("bounce");
+    button.classList.add("bobble");
+    reflection.classList.add("ripple");
+    playChime();
+    // Start the waiting music synchronously within this click so the
+    // browser counts it as a user gesture and doesn't block autoplay.
+    state.started = true;
+    startWaitingMusic();
+    setTimeout(() => render(), 1600);
+  });
   canvas.appendChild(button);
 }
 
