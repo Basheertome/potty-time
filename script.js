@@ -101,9 +101,11 @@ let waitingMusicAudio = null;
 let waitingMusicActive = false;
 let waitingMusicFadeIntervalId = null;
 let waitingMusicUnlockAttached = false;
+let pottyVoicePlayed = false;
 
 function stopWaitingMusic() {
   waitingMusicActive = false;
+  pottyVoicePlayed = false;
   if (waitingMusicFadeIntervalId) {
     clearInterval(waitingMusicFadeIntervalId);
     waitingMusicFadeIntervalId = null;
@@ -148,10 +150,26 @@ function startWaitingMusic() {
     });
 }
 
+function startPottyWaitingSequence() {
+  const step = STEPS[state.stepIndex];
+  if (!step || !step.waitingMusic) return;
+  if (waitingMusicActive) return; // music already running
+  if (pottyVoicePlayed) return; // voice already in flight; its "ended" handler starts the music
+  pottyVoicePlayed = true;
+
+  if (step.voice) {
+    const voice = new Audio(step.voice);
+    voice.addEventListener("ended", startWaitingMusic);
+    voice.play().catch(startWaitingMusic);
+  } else {
+    startWaitingMusic();
+  }
+}
+
 function ensureWaitingMusicUnlock() {
   if (waitingMusicUnlockAttached) return;
   waitingMusicUnlockAttached = true;
-  document.addEventListener("pointerdown", () => startWaitingMusic(), { once: true });
+  document.addEventListener("pointerdown", () => startPottyWaitingSequence(), { once: true });
 }
 
 function render() {
@@ -166,15 +184,14 @@ function render() {
   }
   const step = STEPS[state.stepIndex];
 
-  if (step.voice) {
-    playClip(step.voice);
-  }
-
   if (step.waitingMusic) {
-    startWaitingMusic();
+    startPottyWaitingSequence();
     ensureWaitingMusicUnlock();
   } else {
     stopWaitingMusic();
+    if (step.voice && !step.isSong) {
+      playClip(step.voice);
+    }
   }
 
   const card = document.createElement("div");
@@ -265,10 +282,11 @@ function renderStart() {
     button.classList.add("bobble");
     reflection.classList.add("ripple");
     playChime();
-    // Start the waiting music synchronously within this click so the
-    // browser counts it as a user gesture and doesn't block autoplay.
+    // Kick off the voice-then-music sequence synchronously within this
+    // click so the browser counts it as a user gesture and doesn't
+    // block autoplay.
     state.started = true;
-    startWaitingMusic();
+    startPottyWaitingSequence();
     setTimeout(() => render(), 1600);
   });
   canvas.appendChild(button);
@@ -391,16 +409,27 @@ function runHandWashSong(step, emojiEl, card, staticButton, reflection) {
   };
 
   audio.addEventListener("ended", finish);
-  audio
-    .play()
-    .then(() => {
-      spawnLoopBubble();
-      spawnIntervalId = setInterval(spawnLoopBubble, BUBBLE_SPAWN_INTERVAL_MS);
-    })
-    .catch(() => {
-      // Autoplay blocked; move on after a reasonable fallback delay.
-      setTimeout(finish, 20000);
-    });
+
+  const startSong = () => {
+    audio
+      .play()
+      .then(() => {
+        spawnLoopBubble();
+        spawnIntervalId = setInterval(spawnLoopBubble, BUBBLE_SPAWN_INTERVAL_MS);
+      })
+      .catch(() => {
+        // Autoplay blocked; move on after a reasonable fallback delay.
+        setTimeout(finish, 20000);
+      });
+  };
+
+  if (step.voice) {
+    const voice = new Audio(step.voice);
+    voice.addEventListener("ended", startSong);
+    voice.play().catch(startSong);
+  } else {
+    startSong();
+  }
 }
 
 function goToNextStep() {
