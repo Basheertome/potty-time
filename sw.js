@@ -1,4 +1,4 @@
-const CACHE_NAME = "potty-time-v14";
+const CACHE_NAME = "potty-time-v15";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -19,6 +19,7 @@ const APP_SHELL = [
   "./audio/voice-flush.mp3",
   "./audio/voice-washhands.mp3",
   "./audio/voice-complete.mp3",
+  "./audio/goodjob-fx.mp3",
   "./images/bg-pond.png",
   "./images/pond-button.png",
   "./images/pond-button-reflection.png",

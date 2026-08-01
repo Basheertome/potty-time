@@ -8,6 +8,7 @@ const WAITING_MUSIC_TARGET_VOLUME = 0.6;
 const WAITING_MUSIC_FADE_MS = 2500;
 
 const COMPLETE_VOICE_SRC = "audio/voice-complete.mp3";
+const GOODJOB_FX_SRC = "audio/goodjob-fx.mp3";
 
 const STEPS = [
   {
@@ -435,8 +436,9 @@ function renderComplete() {
 
   canvas.appendChild(card);
 
-  playChime();
-  playClip(COMPLETE_VOICE_SRC);
+  const fx = new Audio(GOODJOB_FX_SRC);
+  fx.addEventListener("ended", () => playClip(COMPLETE_VOICE_SRC));
+  fx.play().catch(() => playClip(COMPLETE_VOICE_SRC));
 
   app.addEventListener(
     "click",
