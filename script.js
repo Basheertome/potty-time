@@ -174,6 +174,7 @@ function ensureWaitingMusicUnlock() {
 
 function render() {
   canvas.innerHTML = "";
+  stopWashSession();
   if (!state.started) {
     renderStart();
     return;
@@ -193,6 +194,15 @@ function render() {
       playClip(step.voice);
     }
   }
+
+  const backButton = document.createElement("button");
+  backButton.className = "frog-back-button";
+  backButton.setAttribute("aria-label", "Go back a step");
+  backButton.addEventListener("click", (event) => {
+    event.stopPropagation();
+    goToPreviousStep();
+  });
+  canvas.appendChild(backButton);
 
   const card = document.createElement("div");
   card.className = "step-card has-button";
@@ -365,11 +375,25 @@ function popAllWashBubbles(entries) {
   });
 }
 
+let activeWashSession = null;
+
+function stopWashSession() {
+  if (!activeWashSession) return;
+  const session = activeWashSession;
+  activeWashSession = null;
+  session.audio.pause();
+  if (session.spawnIntervalId) clearInterval(session.spawnIntervalId);
+  session.bubbles.forEach((entry) => {
+    clearTimeout(entry.timeoutId);
+    entry.wrap.remove();
+  });
+}
+
 function runHandWashSong(step, emojiEl, card, staticButton, reflection) {
   const fill = document.getElementById("song-progress-fill");
   const audio = new Audio(HANDWASH_AUDIO_SRC);
-  const bubbles = []; // active { wrap, timeoutId } entries
-  let spawnIntervalId = null;
+  const session = { audio, spawnIntervalId: null, bubbles: [] };
+  activeWashSession = session;
 
   audio.addEventListener("timeupdate", () => {
     if (audio.duration) {
@@ -378,25 +402,26 @@ function runHandWashSong(step, emojiEl, card, staticButton, reflection) {
   });
 
   const spawnLoopBubble = () => {
-    if (bubbles.length >= MAX_ACTIVE_BUBBLES) return;
+    if (session.bubbles.length >= MAX_ACTIVE_BUBBLES) return;
     const wrap = spawnWashBubble();
     const entry = { wrap, timeoutId: null };
     const lifetime = BUBBLE_MIN_LIFETIME_MS + Math.random() * (BUBBLE_MAX_LIFETIME_MS - BUBBLE_MIN_LIFETIME_MS);
     entry.timeoutId = setTimeout(() => {
-      const idx = bubbles.indexOf(entry);
-      if (idx !== -1) bubbles.splice(idx, 1);
+      const idx = session.bubbles.indexOf(entry);
+      if (idx !== -1) session.bubbles.splice(idx, 1);
       popWashBubble(wrap);
     }, lifetime);
-    bubbles.push(entry);
+    session.bubbles.push(entry);
   };
 
   const finish = () => {
-    if (spawnIntervalId) {
-      clearInterval(spawnIntervalId);
-      spawnIntervalId = null;
+    if (session.spawnIntervalId) {
+      clearInterval(session.spawnIntervalId);
+      session.spawnIntervalId = null;
     }
-    bubbles.forEach((entry) => clearTimeout(entry.timeoutId));
-    popAllWashBubbles(bubbles.splice(0));
+    session.bubbles.forEach((entry) => clearTimeout(entry.timeoutId));
+    popAllWashBubbles(session.bubbles.splice(0));
+    activeWashSession = null;
     setTimeout(() => {
       emojiEl.classList.remove("bubble-bob");
       const button = document.createElement("button");
@@ -415,7 +440,7 @@ function runHandWashSong(step, emojiEl, card, staticButton, reflection) {
       .play()
       .then(() => {
         spawnLoopBubble();
-        spawnIntervalId = setInterval(spawnLoopBubble, BUBBLE_SPAWN_INTERVAL_MS);
+        session.spawnIntervalId = setInterval(spawnLoopBubble, BUBBLE_SPAWN_INTERVAL_MS);
       })
       .catch(() => {
         // Autoplay blocked; move on after a reasonable fallback delay.
@@ -438,6 +463,16 @@ function goToNextStep() {
     render();
   } else {
     state.finished = true;
+    render();
+  }
+}
+
+function goToPreviousStep() {
+  if (state.stepIndex > 0) {
+    state.stepIndex -= 1;
+    render();
+  } else {
+    state.started = false;
     render();
   }
 }
