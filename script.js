@@ -7,35 +7,42 @@ const POTTY_WAIT_AUDIO_SRC = "audio/potty-wait.mp3";
 const WAITING_MUSIC_TARGET_VOLUME = 0.6;
 const WAITING_MUSIC_FADE_MS = 2500;
 
+const COMPLETE_VOICE_SRC = "audio/voice-complete.mp3";
+
 const STEPS = [
   {
     id: "potty",
     title: "Time for Potty!",
     emoji: "\u{1F6BD}",
     waitingMusic: true,
+    voice: "audio/voice-potty.mp3",
   },
   {
     id: "wipe",
     title: "Let's Wipe",
     emoji: "\u{1F9FB}",
     sound: "wipe",
+    voice: "audio/voice-wipe.mp3",
   },
   {
     id: "pantsup",
     title: "Pull up your pants!",
     emoji: "\u{1FA72}",
+    voice: "audio/voice-pantsup.mp3",
   },
   {
     id: "flush",
     title: "Time to Flush!",
     emoji: "\u{1F300}",
     sound: "flush",
+    voice: "audio/voice-flush.mp3",
   },
   {
     id: "washhands",
     title: "Wash Hands",
     emoji: "\u{1FAE7}",
     isSong: true,
+    voice: "audio/voice-washhands.mp3",
   },
 ];
 
@@ -157,6 +164,10 @@ function render() {
     return;
   }
   const step = STEPS[state.stepIndex];
+
+  if (step.voice) {
+    playClip(step.voice);
+  }
 
   if (step.waitingMusic) {
     startWaitingMusic();
@@ -425,6 +436,7 @@ function renderComplete() {
   canvas.appendChild(card);
 
   playChime();
+  playClip(COMPLETE_VOICE_SRC);
 
   app.addEventListener(
     "click",
