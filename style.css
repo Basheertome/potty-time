@@ -322,12 +322,13 @@ body {
    on the same element, so the two never fight over one CSS property. */
 .butterfly {
   position: absolute;
-  width: 60px;
-  height: 60px;
+  width: 108px;
+  height: 108px;
   background-image: url("images/butterfly.png");
   background-size: 1600% 100%;
   background-repeat: no-repeat;
-  pointer-events: none;
+  pointer-events: auto;
+  cursor: pointer;
   z-index: 4;
   animation: butterfly-flap 0.8s steps(16) infinite;
 }
@@ -337,8 +338,8 @@ body {
 }
 
 @keyframes butterfly-flap {
-  from { background-position-x: 0; }
-  to { background-position-x: -960px; }
+  from { background-position-x: 0%; }
+  to { background-position-x: 100%; }
 }
 
 @keyframes butterfly-fly {

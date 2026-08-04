@@ -581,6 +581,15 @@ function spawnButterfly() {
     if (idx !== -1) activeButterflies.splice(idx, 1);
   });
 
+  el.addEventListener("click", (event) => {
+    event.stopPropagation();
+    if (el.dataset.sped) return;
+    el.dataset.sped = "1";
+    el.getAnimations().forEach((anim) => {
+      anim.playbackRate = 2;
+    });
+  });
+
   app.appendChild(el);
   activeButterflies.push(el);
 }
