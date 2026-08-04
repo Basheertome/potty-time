@@ -394,6 +394,7 @@ function runHandWashSong(step, emojiEl, card, staticButton, reflection) {
   const audio = new Audio(HANDWASH_AUDIO_SRC);
   const session = { audio, spawnIntervalId: null, bubbles: [] };
   activeWashSession = session;
+  clearButterflies();
 
   audio.addEventListener("timeupdate", () => {
     if (audio.duration) {
@@ -530,6 +531,68 @@ function spawnConfetti() {
   }
 }
 
+const BUTTERFLY_MIN_DELAY_MS = 2000;
+const BUTTERFLY_MAX_DELAY_MS = 12000;
+const MAX_BUTTERFLIES = 2;
+const BUTTERFLY_MIN_FLIGHT_S = 6;
+const BUTTERFLY_MAX_FLIGHT_S = 9;
+// Vertical bands (top %) that stay clear of the title/instruction/button
+// text on every screen, so a fluttering butterfly never crosses text.
+const BUTTERFLY_SAFE_LANES = [
+  { min: 4, max: 12 },
+  { min: 83, max: 92 },
+];
+
+const activeButterflies = [];
+
+function clearButterflies() {
+  activeButterflies.forEach((el) => el.remove());
+  activeButterflies.length = 0;
+}
+
+function spawnButterfly() {
+  if (activeButterflies.length >= MAX_BUTTERFLIES) return;
+  if (activeWashSession) return; // don't appear while the hand-wash song is playing
+
+  const el = document.createElement("div");
+  el.className = "butterfly flying";
+
+  const lane = BUTTERFLY_SAFE_LANES[Math.floor(Math.random() * BUTTERFLY_SAFE_LANES.length)];
+  el.style.top = `${lane.min + Math.random() * (lane.max - lane.min)}%`;
+
+  const duration = BUTTERFLY_MIN_FLIGHT_S + Math.random() * (BUTTERFLY_MAX_FLIGHT_S - BUTTERFLY_MIN_FLIGHT_S);
+  el.style.setProperty("--fly-duration", `${duration}s`);
+
+  const fromLeft = Math.random() < 0.5;
+  if (fromLeft) {
+    el.style.left = "-15vw";
+    el.style.setProperty("--fly-distance", "130vw");
+    el.style.setProperty("--fly-flip", "-1");
+  } else {
+    el.style.left = "115vw";
+    el.style.setProperty("--fly-distance", "-130vw");
+    el.style.setProperty("--fly-flip", "1");
+  }
+
+  el.addEventListener("animationend", (event) => {
+    if (event.animationName !== "butterfly-fly") return;
+    el.remove();
+    const idx = activeButterflies.indexOf(el);
+    if (idx !== -1) activeButterflies.splice(idx, 1);
+  });
+
+  app.appendChild(el);
+  activeButterflies.push(el);
+}
+
+function scheduleNextButterfly() {
+  const delay = BUTTERFLY_MIN_DELAY_MS + Math.random() * (BUTTERFLY_MAX_DELAY_MS - BUTTERFLY_MIN_DELAY_MS);
+  setTimeout(() => {
+    spawnButterfly();
+    scheduleNextButterfly();
+  }, delay);
+}
+
 let wakeLock = null;
 
 async function requestWakeLock() {
@@ -554,4 +617,5 @@ document.addEventListener("visibilitychange", () => {
 });
 
 requestWakeLock();
+scheduleNextButterfly();
 render();

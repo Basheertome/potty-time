@@ -314,3 +314,34 @@ body {
   color: var(--text-dark);
   opacity: 0.75;
 }
+
+/* Butterflies drift across #app (not #canvas) so they aren't cut off
+   by step transitions clearing #canvas mid-flight - the same reason
+   confetti lives on #app. A single sprite strip (16 frames) drives the
+   flap via background-position; the flight itself animates transform
+   on the same element, so the two never fight over one CSS property. */
+.butterfly {
+  position: absolute;
+  width: 60px;
+  height: 60px;
+  background-image: url("images/butterfly.png");
+  background-size: 1600% 100%;
+  background-repeat: no-repeat;
+  pointer-events: none;
+  z-index: 4;
+  animation: butterfly-flap 0.8s steps(16) infinite;
+}
+
+.butterfly.flying {
+  animation: butterfly-flap 0.8s steps(16) infinite, butterfly-fly var(--fly-duration, 7s) linear forwards;
+}
+
+@keyframes butterfly-flap {
+  from { background-position-x: 0; }
+  to { background-position-x: -960px; }
+}
+
+@keyframes butterfly-fly {
+  from { transform: translateX(0) scaleX(var(--fly-flip, 1)); }
+  to { transform: translateX(var(--fly-distance, 100vw)) scaleX(var(--fly-flip, 1)); }
+}
