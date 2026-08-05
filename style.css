@@ -64,6 +64,10 @@ body {
   padding: 70px 24px 40px;
   text-align: center;
   z-index: 3;
+  /* No child here has its own click handler, so let clicks fall
+     through the card's empty space to whatever sits below it (the
+     frog overlay). */
+  pointer-events: none;
 }
 
 .step-card.has-button {
@@ -107,7 +111,10 @@ body {
 /* The frog is a separate overlay (the background art now has it cut
    out) so it can blink/ribbit independently of the static pond scene.
    On step screens it also doubles as an invisible "go back a step"
-   tap target, matching where it used to be baked into the art. */
+   tap target, matching where it used to be baked into the art. It
+   sits below the text cards (z-index 3) and bubbles (z-index 5) so
+   both visibly draw over it; those cards have pointer-events:none so
+   clicks still reach the frog for the back-navigation to work. */
 .frog-overlay {
   position: absolute;
   left: 0%;
@@ -120,7 +127,7 @@ body {
   background-size: 100% 100%;
   background-repeat: no-repeat;
   padding: 0;
-  z-index: 6;
+  z-index: 2;
 }
 
 button.frog-overlay {
@@ -299,6 +306,10 @@ button.frog-overlay {
   text-align: center;
   padding: 40px 24px;
   z-index: 3;
+  /* No child here has its own click handler; let clicks fall through
+     to the frog overlay (and from there still bubble up to #app's
+     tap-anywhere-to-restart listener). */
+  pointer-events: none;
 }
 
 .confetti {
@@ -324,29 +335,25 @@ button.frog-overlay {
 
 /* Butterflies drift across #app (not #canvas) so they aren't cut off
    by step transitions clearing #canvas mid-flight - the same reason
-   confetti lives on #app. A single sprite strip (16 frames) drives the
-   flap via background-position; the flight itself animates transform
-   on the same element, so the two never fight over one CSS property. */
+   confetti lives on #app. The flap is stepped by hand in JS (pixel-
+   exact background-position, not a CSS steps() animation - at this
+   element's non-integer scale factor that bled in slivers of the
+   neighboring frame, same issue as the frog's sprite); the flight
+   itself animates transform on the same element, so the two never
+   fight over one CSS property. */
 .butterfly {
   position: absolute;
   width: 108px;
   height: 108px;
   background-image: url("images/butterfly.png");
-  background-size: 1600% 100%;
   background-repeat: no-repeat;
   pointer-events: auto;
   cursor: pointer;
   z-index: 4;
-  animation: butterfly-flap 0.8s steps(16) infinite;
 }
 
 .butterfly.flying {
-  animation: butterfly-flap 0.8s steps(16) infinite, butterfly-fly var(--fly-duration, 7s) linear forwards;
-}
-
-@keyframes butterfly-flap {
-  from { background-position-x: 0%; }
-  to { background-position-x: 100%; }
+  animation: butterfly-fly var(--fly-duration, 7s) linear forwards;
 }
 
 @keyframes butterfly-fly {

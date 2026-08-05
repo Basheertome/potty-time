@@ -621,6 +621,8 @@ const BUTTERFLY_MAX_DELAY_MS = 12000;
 const MAX_BUTTERFLIES = 2;
 const BUTTERFLY_MIN_FLIGHT_S = 6;
 const BUTTERFLY_MAX_FLIGHT_S = 9;
+const BUTTERFLY_FLAP_FRAME_COUNT = 16;
+const BUTTERFLY_FLAP_DURATION_MS = 800;
 // Vertical bands (top %) that stay clear of the title/instruction/button
 // text on every screen, so a fluttering butterfly never crosses text.
 const BUTTERFLY_SAFE_LANES = [
@@ -633,6 +635,32 @@ const activeButterflies = [];
 function clearButterflies() {
   activeButterflies.forEach((el) => el.remove());
   activeButterflies.length = 0;
+}
+
+// Steps through the flap strip by hand (see playFrogSprite for why:
+// pixel-exact background-position instead of a CSS steps() animation
+// over a percentage, which bleeds in the neighboring frame at this
+// element's non-integer scale factor). Runs for as long as the
+// butterfly stays in #app; el.flapRate lets the click-to-speed-up
+// handler speed this up in lockstep with the flight.
+function startButterflyFlap(el) {
+  const rect = el.getBoundingClientRect();
+  const frameW = Math.round(rect.width);
+  const frameH = Math.round(rect.height);
+  el.style.backgroundSize = `${frameW * BUTTERFLY_FLAP_FRAME_COUNT}px ${frameH}px`;
+  el.flapRate = 1;
+  let phase = 0;
+  let lastTime = performance.now();
+  function step(now) {
+    if (!app.contains(el)) return;
+    const dt = now - lastTime;
+    lastTime = now;
+    phase = (phase + (dt / BUTTERFLY_FLAP_DURATION_MS) * el.flapRate) % 1;
+    const frame = Math.floor(phase * BUTTERFLY_FLAP_FRAME_COUNT);
+    el.style.backgroundPosition = `-${frame * frameW}px 0px`;
+    requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
 }
 
 function spawnButterfly() {
@@ -670,6 +698,7 @@ function spawnButterfly() {
     event.stopPropagation();
     if (el.dataset.sped) return;
     el.dataset.sped = "1";
+    el.flapRate = 2;
     el.getAnimations().forEach((anim) => {
       anim.playbackRate = 2;
     });
@@ -677,6 +706,7 @@ function spawnButterfly() {
 
   app.appendChild(el);
   activeButterflies.push(el);
+  startButterflyFlap(el);
 }
 
 function scheduleNextButterfly() {
