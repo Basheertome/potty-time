@@ -56,6 +56,95 @@ const state = {
 const app = document.getElementById("app");
 const canvas = document.getElementById("canvas");
 
+const FROG_ANIM_MIN_DELAY_MS = 3000;
+const FROG_ANIM_MAX_DELAY_MS = 10000;
+const FROG_STILL_SRC = "images/frog-still.png";
+const FROG_BLINK_SRC = "images/frog-blink-strip.png";
+const FROG_RIBBIT_SRC = "images/frog-ribbit-strip.png";
+const FROG_BLINK_FRAME_COUNT = 48;
+const FROG_BLINK_DURATION_MS = 2000;
+const FROG_RIBBIT_FRAME_COUNT = 32;
+const FROG_RIBBIT_DURATION_MS = 4000;
+
+let frogEl = null;
+let frogAnimating = false;
+
+// Creates the frog overlay (the background art has the frog cut out so
+// it can blink/ribbit on its own). On step screens it's also an
+// invisible "go back a step" tap target, matching where the frog used
+// to be baked into the art; on the Start/All Done screens it's purely
+// decorative and lets clicks pass through to their own handlers.
+function createFrogOverlay({ clickable }) {
+  const el = document.createElement(clickable ? "button" : "div");
+  el.className = "frog-overlay";
+  if (clickable) {
+    el.setAttribute("aria-label", "Go back a step");
+    el.addEventListener("click", (event) => {
+      event.stopPropagation();
+      goToPreviousStep();
+    });
+  }
+  canvas.appendChild(el);
+  frogEl = el;
+  frogAnimating = false;
+  return el;
+}
+
+// Steps through a sprite strip by hand, computing pixel-exact frame
+// offsets from the element's own rendered size rather than relying on
+// a CSS steps() animation over a percentage background-position: at
+// non-integer scale factors that leaves faint bleed from the
+// neighboring frame at the edges, which is glaring on a strip like the
+// ribbit's where adjacent frames differ a lot.
+function playFrogSprite(el, src, frameCount, durationMs, onDone) {
+  const rect = el.getBoundingClientRect();
+  const frameW = Math.round(rect.width);
+  const frameH = Math.round(rect.height);
+  el.style.backgroundImage = `url("${src}")`;
+  el.style.backgroundSize = `${frameW * frameCount}px ${frameH}px`;
+  el.style.backgroundPosition = "0px 0px";
+
+  const start = performance.now();
+  function step(now) {
+    if (!canvas.contains(el)) return; // torn down by a render() mid-animation
+    const elapsed = now - start;
+    const frame = Math.min(frameCount - 1, Math.floor((elapsed / durationMs) * frameCount));
+    el.style.backgroundPosition = `-${frame * frameW}px 0px`;
+    if (elapsed < durationMs) {
+      requestAnimationFrame(step);
+    } else {
+      onDone();
+    }
+  }
+  requestAnimationFrame(step);
+}
+
+function playFrogAnimation() {
+  if (!frogEl || !canvas.contains(frogEl) || frogAnimating) return;
+  frogAnimating = true;
+  const el = frogEl;
+  const isRibbit = Math.random() < 0.5;
+  const src = isRibbit ? FROG_RIBBIT_SRC : FROG_BLINK_SRC;
+  const frameCount = isRibbit ? FROG_RIBBIT_FRAME_COUNT : FROG_BLINK_FRAME_COUNT;
+  const duration = isRibbit ? FROG_RIBBIT_DURATION_MS : FROG_BLINK_DURATION_MS;
+  playFrogSprite(el, src, frameCount, duration, () => {
+    if (canvas.contains(el)) {
+      el.style.backgroundImage = `url("${FROG_STILL_SRC}")`;
+      el.style.backgroundSize = "100% 100%";
+      el.style.backgroundPosition = "0px 0px";
+    }
+    frogAnimating = false;
+  });
+}
+
+function scheduleNextFrogAnimation() {
+  const delay = FROG_ANIM_MIN_DELAY_MS + Math.random() * (FROG_ANIM_MAX_DELAY_MS - FROG_ANIM_MIN_DELAY_MS);
+  setTimeout(() => {
+    playFrogAnimation();
+    scheduleNextFrogAnimation();
+  }, delay);
+}
+
 function playChime() {
   try {
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -195,14 +284,7 @@ function render() {
     }
   }
 
-  const backButton = document.createElement("button");
-  backButton.className = "frog-back-button";
-  backButton.setAttribute("aria-label", "Go back a step");
-  backButton.addEventListener("click", (event) => {
-    event.stopPropagation();
-    goToPreviousStep();
-  });
-  canvas.appendChild(backButton);
+  createFrogOverlay({ clickable: true });
 
   const card = document.createElement("div");
   card.className = "step-card has-button";
@@ -258,6 +340,8 @@ function render() {
 }
 
 function renderStart() {
+  createFrogOverlay({ clickable: false });
+
   const card = document.createElement("div");
   card.className = "step-card has-button";
 
@@ -480,6 +564,7 @@ function goToPreviousStep() {
 
 function renderComplete() {
   spawnConfetti();
+  createFrogOverlay({ clickable: false });
 
   const card = document.createElement("div");
   card.className = "complete-card";
@@ -627,4 +712,5 @@ document.addEventListener("visibilitychange", () => {
 
 requestWakeLock();
 scheduleNextButterfly();
+scheduleNextFrogAnimation();
 render();

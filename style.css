@@ -39,7 +39,7 @@ body {
    effect as background-size:cover), then centered - the overshoot on
    one axis is what #app's overflow:hidden clips. Because this element
    itself never distorts, every overlay positioned as a percentage of
-   it (button, reflection, progress bar, frog back-button) stays perfectly registered
+   it (button, reflection, progress bar, frog overlay) stays perfectly registered
    with the art regardless of screen shape. */
 #canvas {
   position: absolute;
@@ -104,20 +104,27 @@ body {
   max-width: 480px;
 }
 
-/* Invisible tap target over the frog's spot in the background art
-   (see FROG_CROAK_BOX in script.js history for these coordinates) -
-   lets a caregiver jump back a step at any time. */
-.frog-back-button {
+/* The frog is a separate overlay (the background art now has it cut
+   out) so it can blink/ribbit independently of the static pond scene.
+   On step screens it also doubles as an invisible "go back a step"
+   tap target, matching where it used to be baked into the art. */
+.frog-overlay {
   position: absolute;
-  left: -0.9%;
-  top: 25.2%;
-  width: 40%;
-  height: 18.2%;
+  left: 0%;
+  top: 26.5%;
+  width: 42%;
+  height: 19.5%;
   border: none;
-  background: transparent;
+  background-color: transparent;
+  background-image: url("images/frog-still.png");
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
   padding: 0;
-  cursor: pointer;
   z-index: 6;
+}
+
+button.frog-overlay {
+  cursor: pointer;
 }
 
 .pond-reflection {
