@@ -781,6 +781,15 @@ document.addEventListener("visibilitychange", () => {
   }
 });
 
+// Best-effort: only actually locks in a fullscreen/installed context on
+// platforms that support the Screen Orientation API (notably not iOS
+// Safari). The manifest's orientation:"portrait" covers installed
+// Android PWAs, and the CSS rotate-overlay is the universal fallback
+// for everywhere else.
+if (screen.orientation && screen.orientation.lock) {
+  screen.orientation.lock("portrait").catch(() => {});
+}
+
 requestWakeLock();
 scheduleNextButterfly();
 scheduleNextFrogAnimation();

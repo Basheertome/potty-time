@@ -16,8 +16,9 @@
 html, body {
   margin: 0;
   height: 100%;
+  overflow: hidden;
   overscroll-behavior: none;
-  touch-action: manipulation;
+  touch-action: none;
   font-family: "Baloo 2", "Comic Sans MS", "Trebuchet MS", sans-serif;
   background: #bae6ea;
 }
@@ -26,6 +27,33 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+/* The manifest's orientation:"portrait" and the Screen Orientation
+   API lock (see script.js) only take effect for an installed/
+   fullscreen PWA on platforms that support them (notably not iOS
+   Safari), so this overlay is the universal fallback: it covers the
+   screen and asks for portrait whenever the viewport itself reports
+   landscape, regardless of platform. */
+.rotate-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 24px;
+  background: #bae6ea;
+  color: var(--text-dark);
+  font-size: 1.3rem;
+  font-weight: 700;
+}
+
+@media (orientation: landscape) {
+  .rotate-overlay {
+    display: flex;
+  }
 }
 
 /* Fills the whole screen edge-to-edge, no letterbox bars - clips
