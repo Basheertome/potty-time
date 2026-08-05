@@ -1,6 +1,18 @@
 :root {
   --text-dark: #3a3a3a;
   color-scheme: light;
+  /* Mirrors #canvas's own width formula (see #canvas below) so
+     anything sized off "a % of the screen" can scale with the
+     actual rendered art instead of the raw viewport - the two
+     match in portrait, but diverge once #canvas is letterboxed in
+     landscape, where the viewport is wider than the art itself. */
+  --canvas-w: max(100vw, 100vh * 853 / 1844);
+}
+
+@media (orientation: landscape) {
+  :root {
+    --canvas-w: min(100vw, 100vh * 853 / 1844);
+  }
 }
 
 * {
@@ -29,33 +41,6 @@ body {
   justify-content: center;
 }
 
-/* The manifest's orientation:"portrait" and the Screen Orientation
-   API lock (see script.js) only take effect for an installed/
-   fullscreen PWA on platforms that support them (notably not iOS
-   Safari), so this overlay is the universal fallback: it covers the
-   screen and asks for portrait whenever the viewport itself reports
-   landscape, regardless of platform. */
-.rotate-overlay {
-  display: none;
-  position: fixed;
-  inset: 0;
-  z-index: 9999;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  padding: 24px;
-  background: #bae6ea;
-  color: var(--text-dark);
-  font-size: 1.3rem;
-  font-weight: 700;
-}
-
-@media (orientation: landscape) {
-  .rotate-overlay {
-    display: flex;
-  }
-}
-
 /* Fills the whole screen edge-to-edge, no letterbox bars - clips
    whatever of #canvas overhangs its edges. */
 #app {
@@ -65,13 +50,24 @@ body {
   overflow: hidden;
 }
 
-/* Always kept at the artwork's own 853:1844 ratio and scaled up with
-   max() so it fully covers #app on any device aspect ratio (the same
-   effect as background-size:cover), then centered - the overshoot on
-   one axis is what #app's overflow:hidden clips. Because this element
-   itself never distorts, every overlay positioned as a percentage of
-   it (button, reflection, progress bar, frog overlay) stays perfectly registered
-   with the art regardless of screen shape. */
+/* Always kept at the artwork's own 853:1844 ratio, then centered.
+   Because this element itself never distorts, every overlay
+   positioned as a percentage of it (button, reflection, progress bar,
+   frog overlay) stays perfectly registered with the art regardless of
+   screen shape.
+
+   Portrait: scaled up with max() so it fully covers #app edge-to-edge
+   (the same effect as background-size:cover) - the overshoot on one
+   axis is what #app's overflow:hidden clips.
+
+   Landscape isn't blocked (the manifest's orientation:"portrait" and
+   the Screen Orientation API lock in script.js do their best to
+   prevent it, but neither is guaranteed - notably not on iOS Safari),
+   so it gets min() instead: the same aspect-locked canvas, but scaled
+   to fit *within* the viewport (background-size:contain) rather than
+   covering it. Nothing gets clipped - the art and every overlay on it
+   just get letterboxed with the page's own background on the sides,
+   so the whole app stays visible and tappable. */
 #canvas {
   position: absolute;
   top: 50%;
@@ -82,6 +78,13 @@ body {
   background-image: url("images/bg-pond.png");
   background-size: 100% 100%;
   background-repeat: no-repeat;
+}
+
+@media (orientation: landscape) {
+  #canvas {
+    width: min(100vw, 100vh * 853 / 1844);
+    height: min(100vh, 100vw * 1844 / 853);
+  }
 }
 
 .step-card {
@@ -108,8 +111,8 @@ body {
 }
 
 .step-emoji {
-  width: min(28vw, 170px);
-  height: min(28vw, 170px);
+  width: min(calc(28 * var(--canvas-w) / 100), 170px);
+  height: min(calc(28 * var(--canvas-w) / 100), 170px);
   line-height: 1;
   filter: drop-shadow(0 8px 12px rgba(0, 0, 0, 0.15));
 }
@@ -133,7 +136,7 @@ body {
 }
 
 .step-title {
-  font-size: clamp(2.2rem, 8vw, 3.6rem);
+  font-size: clamp(2.2rem, calc(8 * var(--canvas-w) / 100), 3.6rem);
   color: var(--text-dark);
   margin: 0;
   font-weight: 800;
@@ -141,7 +144,7 @@ body {
 }
 
 .step-instruction {
-  font-size: clamp(1.2rem, 4.2vw, 1.8rem);
+  font-size: clamp(1.2rem, calc(4.2 * var(--canvas-w) / 100), 1.8rem);
   color: var(--text-dark);
   margin: 0;
   max-width: 480px;
@@ -209,7 +212,7 @@ button.frog-overlay {
   align-items: center;
   justify-content: center;
   padding: 0 6% 12%;
-  font-size: clamp(1.7rem, 7.2vw, 2.8rem);
+  font-size: clamp(1.7rem, calc(7.2 * var(--canvas-w) / 100), 2.8rem);
   line-height: 1.05;
   font-weight: 800;
   color: #fff;
@@ -226,7 +229,7 @@ button.frog-overlay {
   cursor: default;
   flex-direction: column;
   gap: 2px;
-  font-size: clamp(1.9rem, 8vw, 3.2rem);
+  font-size: clamp(1.9rem, calc(8 * var(--canvas-w) / 100), 3.2rem);
   line-height: 1.05;
 }
 
@@ -288,7 +291,7 @@ button.frog-overlay {
   left: 50%;
   top: 78%;
   transform: translateX(-50%);
-  width: min(80vw, 420px);
+  width: min(calc(80 * var(--canvas-w) / 100), 420px);
   height: 16px;
   background: rgba(255, 255, 255, 0.5);
   border-radius: 20px;
