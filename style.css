@@ -99,6 +99,7 @@ body {
   color: var(--text-dark);
   margin: 0;
   font-weight: 800;
+  text-shadow: 0 2px 5px rgba(186, 229, 232, 0.9);
 }
 
 .step-instruction {
@@ -106,6 +107,7 @@ body {
   color: var(--text-dark);
   margin: 0;
   max-width: 480px;
+  text-shadow: 0 2px 5px rgba(186, 229, 232, 0.9);
 }
 
 /* The frog is a separate overlay (the background art now has it cut
