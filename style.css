@@ -77,9 +77,16 @@ body {
 }
 
 .step-emoji {
-  font-size: min(28vw, 170px);
+  width: min(28vw, 170px);
+  height: min(28vw, 170px);
   line-height: 1;
   filter: drop-shadow(0 8px 12px rgba(0, 0, 0, 0.15));
+}
+
+.step-emoji img {
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 
 .step-emoji.bounce {
@@ -221,12 +228,21 @@ button.frog-overlay {
 
 .yay-pop {
   position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 8px;
   font-size: 3rem;
   font-weight: 800;
   color: #fff;
   text-shadow: 0 3px 6px rgba(0, 0, 0, 0.25);
   animation: float-up 1.4s ease forwards;
   pointer-events: none;
+}
+
+.yay-star {
+  width: 2.6rem;
+  height: 2.6rem;
+  filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.25));
 }
 
 @keyframes float-up {
@@ -323,7 +339,8 @@ button.frog-overlay {
 .confetti {
   position: absolute;
   top: -10%;
-  font-size: 2rem;
+  width: 2rem;
+  height: 2rem;
   animation: fall linear forwards;
   z-index: 4;
 }

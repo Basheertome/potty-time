@@ -10,38 +10,42 @@ const WAITING_MUSIC_FADE_MS = 2500;
 const COMPLETE_VOICE_SRC = "audio/voice-complete.mp3";
 const GOODJOB_FX_SRC = "audio/goodjob-fx.mp3";
 
+// Icons are Google's open-source Noto Emoji SVGs (the Android/Google
+// emoji style) rather than the platform's native emoji font, so they
+// render identically on iOS, Android, and desktop instead of iOS
+// showing Apple's emoji artwork.
 const STEPS = [
   {
     id: "potty",
     title: "Time for Potty!",
-    emoji: "\u{1F6BD}",
+    icon: "images/emoji/toilet.svg",
     waitingMusic: true,
     voice: "audio/voice-potty.mp3",
   },
   {
     id: "wipe",
     title: "Let's Wipe",
-    emoji: "\u{1F9FB}",
+    icon: "images/emoji/roll-of-paper.svg",
     sound: "wipe",
     voice: "audio/voice-wipe.mp3",
   },
   {
     id: "pantsup",
     title: "Pull up your pants!",
-    emoji: "\u{1FA72}",
+    icon: "images/emoji/briefs.svg",
     voice: "audio/voice-pantsup.mp3",
   },
   {
     id: "flush",
     title: "Time to Flush!",
-    emoji: "\u{1F300}",
+    icon: "images/emoji/cyclone.svg",
     sound: "flush",
     voice: "audio/voice-flush.mp3",
   },
   {
     id: "washhands",
     title: "Wash Hands",
-    emoji: "\u{1FAE7}",
+    icon: "images/emoji/bubbles.svg",
     isSong: true,
     voice: "audio/voice-washhands.mp3",
   },
@@ -79,6 +83,19 @@ function preloadImage(src) {
 }
 preloadImage(FROG_BLINK_SRC);
 preloadImage(FROG_RIBBIT_SRC);
+
+// Builds a .step-emoji wrapper around an <img> icon instead of a text
+// node holding a literal emoji character, so classList.add() from the
+// bounce/bubble-bob animations keeps working unchanged on the wrapper.
+function createStepIcon(src) {
+  const wrap = document.createElement("div");
+  wrap.className = "step-emoji";
+  const img = document.createElement("img");
+  img.src = src;
+  img.alt = "";
+  wrap.appendChild(img);
+  return wrap;
+}
 
 let frogEl = null;
 let frogAnimating = false;
@@ -303,9 +320,7 @@ function render() {
   const card = document.createElement("div");
   card.className = "step-card has-button";
 
-  const emoji = document.createElement("div");
-  emoji.className = "step-emoji";
-  emoji.textContent = step.emoji;
+  const emoji = createStepIcon(step.icon);
   card.appendChild(emoji);
 
   if (step.isSong) {
@@ -359,9 +374,7 @@ function renderStart() {
   const card = document.createElement("div");
   card.className = "step-card has-button";
 
-  const emoji = document.createElement("div");
-  emoji.className = "step-emoji";
-  emoji.textContent = "\u{1F438}";
+  const emoji = createStepIcon("images/emoji/frog.svg");
   card.appendChild(emoji);
 
   const title = document.createElement("h1");
@@ -416,7 +429,14 @@ function handleStepComplete(step, emojiEl, card, button, reflection) {
 function showYay(card) {
   const yay = document.createElement("div");
   yay.className = "yay-pop";
-  yay.textContent = "Yay! ⭐";
+  const text = document.createElement("span");
+  text.textContent = "Yay!";
+  yay.appendChild(text);
+  const star = document.createElement("img");
+  star.className = "yay-star";
+  star.src = "images/emoji/star.svg";
+  star.alt = "";
+  yay.appendChild(star);
   card.appendChild(yay);
   setTimeout(() => yay.remove(), 1400);
 }
@@ -583,9 +603,8 @@ function renderComplete() {
   const card = document.createElement("div");
   card.className = "complete-card";
 
-  const emoji = document.createElement("div");
-  emoji.className = "step-emoji bounce";
-  emoji.textContent = "\u{1F389}";
+  const emoji = createStepIcon("images/emoji/party-popper.svg");
+  emoji.classList.add("bounce");
   card.appendChild(emoji);
 
   const title = document.createElement("h1");
@@ -616,12 +635,20 @@ function renderComplete() {
   );
 }
 
+const CONFETTI_ICONS = [
+  "images/emoji/star.svg",
+  "images/emoji/party-popper.svg",
+  "images/emoji/confetti-ball.svg",
+  "images/emoji/rainbow.svg",
+  "images/emoji/sparkles.svg",
+];
+
 function spawnConfetti() {
-  const pieces = ["⭐", "\u{1F389}", "\u{1F38A}", "\u{1F308}", "✨"];
   for (let i = 0; i < 60; i++) {
-    const el = document.createElement("div");
+    const el = document.createElement("img");
     el.className = "confetti";
-    el.textContent = pieces[Math.floor(Math.random() * pieces.length)];
+    el.src = CONFETTI_ICONS[Math.floor(Math.random() * CONFETTI_ICONS.length)];
+    el.alt = "";
     el.style.left = `${Math.random() * 100}%`;
     el.style.animationDuration = `${3.5 + Math.random() * 3}s`;
     el.style.animationDelay = `${Math.random() * 1.8}s`;

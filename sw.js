@@ -1,4 +1,4 @@
-const CACHE_NAME = "potty-time-v23";
+const CACHE_NAME = "potty-time-v24";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -28,6 +28,17 @@ const APP_SHELL = [
   "./images/frog-still.png",
   "./images/frog-blink-strip.png",
   "./images/frog-ribbit-strip.png",
+  "./images/emoji/toilet.svg",
+  "./images/emoji/roll-of-paper.svg",
+  "./images/emoji/briefs.svg",
+  "./images/emoji/cyclone.svg",
+  "./images/emoji/bubbles.svg",
+  "./images/emoji/frog.svg",
+  "./images/emoji/party-popper.svg",
+  "./images/emoji/confetti-ball.svg",
+  "./images/emoji/rainbow.svg",
+  "./images/emoji/sparkles.svg",
+  "./images/emoji/star.svg",
 ];
 
 self.addEventListener("install", (event) => {
