@@ -146,6 +146,12 @@ button.frog-overlay {
   pointer-events: none;
   transform-origin: 50% 20%;
   z-index: 1;
+  animation: pond-idle-ripple 4.5s ease-in-out infinite;
+}
+
+@keyframes pond-idle-ripple {
+  0%, 100% { transform: scale(1, 1); opacity: 0.95; }
+  50% { transform: scale(1.02, 0.98); opacity: 1; }
 }
 
 .pond-button {

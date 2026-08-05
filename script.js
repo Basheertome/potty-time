@@ -66,6 +66,20 @@ const FROG_BLINK_DURATION_MS = 2000;
 const FROG_RIBBIT_FRAME_COUNT = 32;
 const FROG_RIBBIT_DURATION_MS = 4000;
 
+// Decode the blink/ribbit strips up front. Without this, the first
+// (and sometimes a later) switch from the still image to one of these
+// leaves the frog blank for a frame while the browser fetches and
+// decodes a background-image it's never displayed before.
+function preloadImage(src) {
+  const img = new Image();
+  img.src = src;
+  if (img.decode) {
+    img.decode().catch(() => {});
+  }
+}
+preloadImage(FROG_BLINK_SRC);
+preloadImage(FROG_RIBBIT_SRC);
+
 let frogEl = null;
 let frogAnimating = false;
 
