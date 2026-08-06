@@ -9,17 +9,17 @@
 <link rel="icon" href="icons/icon-512.png" sizes="512x512" />
 <meta name="theme-color" content="#FF8FAB" />
 <meta name="mobile-web-app-capable" content="yes" />
-<link rel="stylesheet" href="style.css" />
+<!-- The ?v= on style.css/script.js is the cache key for those files: a
+     version bump makes them brand-new URLs, so no browser, proxy or
+     service worker can hand back a stale copy. index.html itself can't
+     be versioned this way (it's the URL you navigate to), so the
+     service worker always fetches it from the network first - that's
+     what delivers the new ?v= numbers. Run ./bump-version.sh to update
+     every reference at once. -->
+<link rel="stylesheet" href="style.css?v=36" />
 </head>
 <body>
   <div id="app"><div id="canvas"></div></div>
-  <script src="script.js"></script>
-  <script>
-    if ("serviceWorker" in navigator) {
-      window.addEventListener("load", () => {
-        navigator.serviceWorker.register("./sw.js");
-      });
-    }
-  </script>
+  <script src="script.js?v=36"></script>
 </body>
 </html>

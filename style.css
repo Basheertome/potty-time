@@ -7,21 +7,49 @@
 }
 
 :root {
-  --text-color: #fff;
+  /* A hair off pure white - warm enough to feel drawn rather than
+     clinical against the scene's cool blues. */
+  --text-color: #fffdf7;
   /* Patrick Hand reads a little condensed at its natural width, so text
      elements are stretched horizontally by this factor (paired with
      display:inline-block/block so the transform has a box to act on -
      see each usage below). */
   --letter-stretch: scaleX(1.12);
-  /* Simulates a stroke via 8 tightly-packed offset shadows (real
-     text-stroke isn't well-supported without -webkit prefixes), plus
-     a stronger/larger soft drop shadow beneath for lift off the pond
-     background. */
-  --text-outline:
-    -2px -2px 0 #0f8c46, 0 -2px 0 #0f8c46, 2px -2px 0 #0f8c46,
-    -2px 0 0 #0f8c46, 2px 0 0 #0f8c46,
-    -2px 2px 0 #0f8c46, 0 2px 0 #0f8c46, 2px 2px 0 #0f8c46,
-    0 4px 10px rgba(0, 0, 0, 0.35);
+
+  /* Deep, muted pond green. The old outline used a fully saturated
+     green, which read as a clip-art sticker border; dropping the
+     saturation and value lets the outline behave like the edge of the
+     artwork instead of competing with it. */
+  --text-stroke-color: #2c6e49;
+  /* Every text measurement below is in em, so a caption and a headline
+     get proportionally identical treatment. The old ring was a flat
+     2px: ~3% of the title's height but ~10% of the small text's, and
+     since Patrick Hand's stems are only about 2px at that size the
+     ring was as thick as the letters - clogging the counters in
+     "Let's get started!" and blobbing the apostrophe.
+     paint-order draws the stroke behind the fill, so it grows outward
+     only and never eats into the letterform; the visible weight is
+     therefore half this value. */
+  --text-stroke-width: 0.075em;
+  /* Two layers rather than one blur: a tight contact shadow that
+     defines the edge, plus a wider soft one for lift. Tinted with the
+     scene's deep green instead of neutral black, which turned muddy
+     over the blue-green water. */
+  --text-lift:
+    0 0.015em 0.02em rgba(20, 61, 44, 0.32),
+    0 0.05em 0.14em rgba(20, 61, 44, 0.24);
+  /* Fallback ring for browsers without paint-order (see @supports
+     below). Same 8 offsets as before but em-scaled and tightened to
+     roughly match the true stroke's visible weight. */
+  --text-ring:
+    -0.035em -0.035em 0 var(--text-stroke-color),
+    0 -0.04em 0 var(--text-stroke-color),
+    0.035em -0.035em 0 var(--text-stroke-color),
+    -0.04em 0 0 var(--text-stroke-color),
+    0.04em 0 0 var(--text-stroke-color),
+    -0.035em 0.035em 0 var(--text-stroke-color),
+    0 0.04em 0 var(--text-stroke-color),
+    0.035em 0.035em 0 var(--text-stroke-color);
   color-scheme: light;
   /* Mirrors #canvas's own width formula (see #canvas below) so
      anything sized off "a % of the screen" can scale with the
@@ -173,22 +201,48 @@ body {
   100% { transform: scale(1) rotate(0deg); }
 }
 
+/* Text that floats directly over the pond art needs an outline to stay
+   legible across water, lily pads and clouds. Text sitting on the solid
+   green button does not (see .pond-button) - it already has a uniform
+   high-contrast backdrop, and outlining it would only add green onto
+   green. Both share the same shadow language so they still read as one
+   family. */
+.step-title,
+.step-instruction,
+.restart-hint,
+.yay-pop-text {
+  color: var(--text-color);
+  text-shadow: var(--text-ring), var(--text-lift);
+}
+
+/* The real stroke, wherever it's available: uniform at every angle,
+   where the 8-offset fallback ring is measurably lumpier (its diagonals
+   land ~1.4x further out than its orthogonals, which shows up as
+   corners on round letters). paint-order puts it behind the fill so it
+   only ever grows outward. */
+@supports (paint-order: stroke) {
+  .step-title,
+  .step-instruction,
+  .restart-hint,
+  .yay-pop-text {
+    -webkit-text-stroke: var(--text-stroke-width) var(--text-stroke-color);
+    paint-order: stroke fill;
+    text-shadow: var(--text-lift);
+  }
+}
+
 .step-title {
   font-size: clamp(2.2rem, calc(8 * var(--canvas-w) / 100), 3.6rem);
-  color: var(--text-color);
   margin: 0;
   font-weight: 800;
-  text-shadow: var(--text-outline);
   transform: var(--letter-stretch);
 }
 
 .step-instruction {
   font-size: clamp(1.2rem, calc(4.2 * var(--canvas-w) / 100), 1.8rem);
-  color: var(--text-color);
   margin: 0;
   max-width: 480px;
   transform: var(--letter-stretch);
-  text-shadow: var(--text-outline);
 }
 
 /* The frog is a separate overlay (the background art now has it cut
@@ -259,8 +313,14 @@ button.frog-overlay {
   font-size: clamp(1.7rem, calc(7.2 * var(--canvas-w) / 100), 2.8rem);
   line-height: 1.05;
   font-weight: 800;
-  color: #fff;
-  text-shadow: 0 2px 5px rgba(0, 0, 0, 0.35);
+  color: var(--text-color);
+  /* No outline here - white on the button's solid green already has the
+     contrast, and a green stroke would just be green on green. Same
+     two-layer em-based shadow as the scene text, pitched to the darker
+     green of the button so the letters look pressed into it. */
+  text-shadow:
+    0 0.02em 0.02em rgba(9, 56, 30, 0.38),
+    0 0.05em 0.12em rgba(9, 56, 30, 0.28);
   cursor: pointer;
   z-index: 2;
 }
@@ -320,12 +380,12 @@ button.frog-overlay {
   gap: 8px;
   font-size: 3rem;
   font-weight: 800;
-  color: #fff;
-  text-shadow: 0 3px 6px rgba(0, 0, 0, 0.25);
   animation: float-up 1.4s ease forwards;
   pointer-events: none;
 }
 
+/* Colour, stroke and shadow come from the shared scene-text rule above;
+   this only adds the horizontal stretch. */
 .yay-pop-text {
   display: inline-block;
   transform: var(--letter-stretch);
@@ -334,7 +394,7 @@ button.frog-overlay {
 .yay-star {
   width: 2.6rem;
   height: 2.6rem;
-  filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.25));
+  filter: drop-shadow(0 2px 5px rgba(20, 61, 44, 0.3));
 }
 
 @keyframes float-up {
@@ -446,8 +506,6 @@ button.frog-overlay {
 
 .restart-hint {
   font-size: 1.1rem;
-  color: var(--text-color);
-  text-shadow: var(--text-outline);
   opacity: 0.75;
   transform: var(--letter-stretch);
 }

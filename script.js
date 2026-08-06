@@ -640,6 +640,9 @@ function renderComplete() {
       state.started = false;
       state.finished = false;
       state.stepIndex = 0;
+      // Back at the start screen is a safe moment to swallow a pending
+      // app update, if one arrived while the routine was running.
+      if (applyPendingUpdate()) return;
       render();
     },
     { once: true }
@@ -789,16 +792,69 @@ async function requestWakeLock() {
 document.addEventListener("visibilitychange", () => {
   if (document.visibilityState === "visible") {
     requestWakeLock();
+    checkForUpdate();
+    applyPendingUpdate();
   }
 });
 
 // Best-effort: only actually locks in a fullscreen/installed context on
 // platforms that support the Screen Orientation API (notably not iOS
 // Safari). The manifest's orientation:"portrait" covers installed
-// Android PWAs, and the CSS rotate-overlay is the universal fallback
-// for everywhere else.
+// Android PWAs; elsewhere the layout is simply built to stay usable in
+// landscape (see #canvas in style.css).
 if (screen.orientation && screen.orientation.lock) {
   screen.orientation.lock("portrait").catch(() => {});
+}
+
+/* ---- Service worker registration and updates ---------------------- */
+
+let swRegistration = null;
+let updateWaiting = false;
+
+function checkForUpdate() {
+  if (swRegistration) swRegistration.update().catch(() => {});
+}
+
+// A new version only takes effect on reload, but reloading out from
+// under a toddler mid-routine would dump them back on the start screen
+// and cut the audio. So hold the reload until they're not in the middle
+// of anything - which in practice means the next time the app is opened.
+// Returns true when it is reloading, so callers can skip work that the
+// reload is about to throw away.
+function applyPendingUpdate() {
+  if (!updateWaiting) return false;
+  if (state.started && !state.finished) return false;
+  window.location.reload();
+  return true;
+}
+
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker
+      // updateViaCache:"none" stops the browser serving sw.js itself
+      // out of the HTTP cache. Without it a new worker can go unnoticed
+      // for up to 24h, and none of the cache busting below ever runs.
+      .register("./sw.js", { updateViaCache: "none" })
+      .then((registration) => {
+        swRegistration = registration;
+      })
+      .catch(() => {});
+
+    // An installed PWA can sit resident for days without a navigation,
+    // so poll on a slow timer as well as on every foreground.
+    setInterval(checkForUpdate, 60 * 60 * 1000);
+  });
+
+  // Fires once the replacement worker has taken control. Guarded on
+  // there having been a previous controller, otherwise this would also
+  // fire on the very first install (via clients.claim) and reload a
+  // page that is already perfectly up to date.
+  const hadController = !!navigator.serviceWorker.controller;
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    if (!hadController || updateWaiting) return;
+    updateWaiting = true;
+    applyPendingUpdate();
+  });
 }
 
 requestWakeLock();
