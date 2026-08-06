@@ -792,6 +792,7 @@ async function requestWakeLock() {
 document.addEventListener("visibilitychange", () => {
   if (document.visibilityState === "visible") {
     requestWakeLock();
+    remeasureViewport();
     checkForUpdate();
     applyPendingUpdate();
   }
@@ -804,6 +805,59 @@ document.addEventListener("visibilitychange", () => {
 // landscape (see #canvas in style.css).
 if (screen.orientation && screen.orientation.lock) {
   screen.orientation.lock("portrait").catch(() => {});
+}
+
+/* ---- Viewport measurement ----------------------------------------- */
+
+// Publishes the real viewport size to CSS as --vw/--vh. Everything in
+// the stylesheet sizes off these instead of vh/dvh units, because on
+// iOS - especially an installed, standalone PWA - the viewport a
+// stylesheet sees can still be the *previous* orientation's for a
+// while after a rotation. That's what left the artwork short of the
+// bottom of the screen, showing a band of flat page background, after
+// going to landscape and back.
+function setViewportSize() {
+  const vv = window.visualViewport;
+  const width = Math.round(vv ? vv.width : window.innerWidth);
+  const height = Math.round(vv ? vv.height : window.innerHeight);
+  if (!width || !height) return;
+
+  const root = document.documentElement;
+  root.style.setProperty("--vw", `${width}px`);
+  root.style.setProperty("--vh", `${height}px`);
+  // Orientation comes from the same measurement rather than from a CSS
+  // media query, so the two can never disagree about which way round
+  // the screen is - see the note above the rules in style.css.
+  root.dataset.orientation = width > height ? "landscape" : "portrait";
+
+  // A rotation can also leave the page scrolled down even though the
+  // body can't normally scroll, which is the other half of what the
+  // gap at the bottom looked like.
+  if (window.scrollY !== 0 || window.scrollX !== 0) window.scrollTo(0, 0);
+}
+
+// iOS reports the pre-rotation size synchronously inside the resize and
+// orientationchange events, so one measurement is never enough - take
+// it again over the next few hundred milliseconds and let the last
+// (correct) one win. Cheap: it only writes two custom properties.
+let remeasureTimers = [];
+function remeasureViewport() {
+  remeasureTimers.forEach(clearTimeout);
+  setViewportSize();
+  requestAnimationFrame(setViewportSize);
+  remeasureTimers = [80, 200, 400, 700].map((ms) =>
+    setTimeout(setViewportSize, ms)
+  );
+}
+
+setViewportSize();
+window.addEventListener("resize", remeasureViewport);
+window.addEventListener("orientationchange", remeasureViewport);
+// Fires when the app is restored from the back/forward cache, which on
+// iOS is how a backgrounded home-screen PWA often comes back.
+window.addEventListener("pageshow", remeasureViewport);
+if (window.visualViewport) {
+  window.visualViewport.addEventListener("resize", setViewportSize);
 }
 
 /* ---- Service worker registration and updates ---------------------- */

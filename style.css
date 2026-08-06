@@ -51,25 +51,67 @@
     0 0.04em 0 var(--text-stroke-color),
     0.035em 0.035em 0 var(--text-stroke-color);
   color-scheme: light;
-  /* Mirrors #canvas's own width formula (see #canvas below) so
-     anything sized off "a % of the screen" can scale with the
-     actual rendered art instead of the raw viewport - the two
-     match in portrait, but diverge once #canvas is letterboxed in
-     landscape, where the viewport is wider than the art itself.
-     Uses dvw/dvh (not vw/vh) - see #app for why. */
-  --canvas-w: max(100dvw, 100dvh * 853 / 1844);
+
+  /* The live viewport, in real pixels, written by setViewportSize() in
+     script.js on every resize and rotation. The dvw/dvh here are only
+     the value used before that first runs (and if JS is off).
+     Everything below sizes off these rather than viewport units,
+     because iOS Safari can hand back a stale viewport after an
+     orientation change - even for dvh, which is supposed to fix
+     exactly that - leaving the art short of the bottom of the screen
+     with a band of flat page background showing under it. Measuring in
+     JS and re-measuring a few frames later is the only thing that
+     reliably survives the rotation. */
+  --vw: 100dvw;
+  --vh: 100dvh;
+
+  /* Mirrors #canvas's own size (see #canvas below) so anything sized
+     off "a % of the screen" scales with the actual rendered art rather
+     than the raw viewport - the two match in portrait, but diverge
+     once #canvas is letterboxed in landscape.
+
+     Portrait covers the screen; landscape fits within it, floored at
+     340px so the letterboxed canvas never shrinks so far that
+     percentage-wide overlays (like the main button) become too narrow
+     to fit their clamped-minimum-size text without wrapping onto an
+     extra, cramped line. On very short landscape viewports that floor
+     trades a little top/bottom clipping of decorative art for keeping
+     the UI readable and well-proportioned. */
+  --canvas-w-portrait: max(var(--vw), var(--vh) * 853 / 1844);
+  --canvas-w-landscape: max(340px, min(var(--vw), var(--vh) * 853 / 1844));
+
+  --canvas-w: var(--canvas-w-portrait);
+  /* Always derived from the width, so the artwork's 853:1844 ratio
+     holds in both orientations no matter which branch won above. */
+  --canvas-h: calc(var(--canvas-w) * 1844 / 853);
 }
 
+/* Which of the two applies is decided by data-orientation, set from the
+   same JS measurement that sets --vw/--vh (see setViewportSize).
+
+   It deliberately does not rely on this media query, which is the
+   subtle part: after a rotation iOS can report a stale viewport *and*
+   evaluate orientation against it. When those two disagree - the query
+   still saying landscape while the screen is already portrait - the
+   canvas gets built to the landscape rules at portrait dimensions and
+   comes up short of the bottom of the screen. That is exactly the band
+   of flat background under the artwork. Deriving both from one
+   measurement means they cannot contradict each other.
+
+   The query is kept as the no-JS fallback; the attribute rules below
+   are more specific, so they win whenever JS has run. */
 @media (orientation: landscape) {
   :root {
-    /* Floored at 340px so the letterboxed canvas never shrinks so far
-       that percentage-wide overlays (like the main button) become too
-       narrow to fit their clamped-minimum-size text without wrapping
-       onto an extra, cramped line. On very short/narrow landscape
-       viewports this trades a bit of top/bottom clipping of decorative
-       art for keeping the UI readable and well-proportioned. */
-    --canvas-w: max(340px, min(100dvw, 100dvh * 853 / 1844));
+    --canvas-w: var(--canvas-w-landscape);
   }
+}
+
+:root[data-orientation="portrait"] {
+  --canvas-w: var(--canvas-w-portrait);
+}
+
+:root[data-orientation="landscape"] {
+  --canvas-w: var(--canvas-w-landscape);
 }
 
 * {
@@ -100,17 +142,55 @@ body {
 }
 
 /* Fills the whole screen edge-to-edge, no letterbox bars - clips
-   whatever of #canvas overhangs its edges. Uses dvw/dvh (dynamic
-   viewport units), not vw/vh: plain vh is notorious on iOS Safari for
-   going stale across an orientation change - it can keep resolving to
-   the old (landscape) viewport size after rotating back to portrait,
-   leaving a gap of flat background at the bottom. dvh is specifically
-   designed to track the current visual viewport instead. */
+   whatever of #canvas overhangs its edges. */
 #app {
   position: relative;
-  width: 100dvw;
-  height: 100dvh;
+  width: var(--vw);
+  height: var(--vh);
   overflow: hidden;
+}
+
+/* Full-bleed backdrop, so landscape doesn't sit in flat blue bars.
+   It's the same pond art stretched to the full width of the screen at
+   exactly #canvas's height and vertical position, which is the detail
+   that makes it work: every horizontal band in the painting - sky,
+   hills, waterline - lands at the same height as in #canvas, so the
+   scene reads as continuing off both edges instead of as a second,
+   mismatched copy behind the first. Only the horizontal stretch
+   differs, and the blur hides that along with the seam.
+
+   In portrait #canvas covers this completely, so it costs nothing
+   there - but it does mean any momentary gap at an edge shows blurred
+   pond rather than a flat slab of page background. */
+#app::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: var(--vw);
+  /* Normally --canvas-h, which is what aligns the bands. It is always
+     the taller of the two when the layout is correct, so the max() only
+     ever engages during the brief window after a rotation before the
+     re-measure lands - and there it guarantees blurred pond rather than
+     a flat slab of page background. */
+  height: max(var(--canvas-h), var(--vh));
+  /* Scaled up a little so the blur's own soft edges fall outside the
+     screen instead of fading in at the sides. */
+  transform: translate(-50%, -50%) scale(1.08);
+  background-image: url("images/bg-pond.png");
+  /* 200% horizontally samples just the middle of the painting - mostly
+     open water and hillside - so the busy left-hand rock never lands in
+     the margins as a grey smear. Vertically it stays at 100%, which is
+     what preserves the band alignment described above. */
+  background-size: 200% 100%;
+  background-position: 50% 50%;
+  background-repeat: no-repeat;
+  /* Enough blur that individual objects dissolve into atmosphere, while
+     the hill band stays readable enough to sell the scene carrying on
+     past the edges. Pulled back and lightened a little so it sits
+     behind the crisp middle rather than competing with it. */
+  filter: blur(44px) saturate(0.85) brightness(1.06);
+  z-index: 0;
 }
 
 /* Always kept at the artwork's own 853:1844 ratio, then centered.
@@ -119,38 +199,27 @@ body {
    frog overlay) stays perfectly registered with the art regardless of
    screen shape.
 
-   Portrait: scaled up with max() so it fully covers #app edge-to-edge
-   (the same effect as background-size:cover) - the overshoot on one
-   axis is what #app's overflow:hidden clips.
+   Portrait: --canvas-w resolves to a cover fit, so the art fills the
+   screen and the overshoot on one axis is what #app's overflow:hidden
+   clips.
 
    Landscape isn't blocked (the manifest's orientation:"portrait" and
    the Screen Orientation API lock in script.js do their best to
    prevent it, but neither is guaranteed - notably not on iOS Safari),
-   so it gets min() instead: the same aspect-locked canvas, but scaled
-   to fit *within* the viewport (background-size:contain) rather than
-   covering it. Nothing gets clipped - the art and every overlay on it
-   just get letterboxed with the page's own background on the sides,
-   so the whole app stays visible and tappable. */
+   so --canvas-w resolves to a contain fit instead: the same
+   aspect-locked canvas, scaled to fit *within* the viewport. Nothing
+   is clipped, the whole app stays visible and tappable, and the
+   backdrop above fills the space either side. */
 #canvas {
   position: absolute;
   top: 50%;
   left: 50%;
-  width: max(100dvw, 100dvh * 853 / 1844);
-  height: max(100dvh, 100dvw * 1844 / 853);
+  width: var(--canvas-w);
+  height: var(--canvas-h);
   transform: translate(-50%, -50%);
   background-image: url("images/bg-pond.png");
   background-size: 100% 100%;
   background-repeat: no-repeat;
-}
-
-@media (orientation: landscape) {
-  #canvas {
-    /* Derived from --canvas-w (not its own min()) so the floor above
-       and the aspect ratio always agree - #canvas can never end up
-       wider than the floored width implies. */
-    width: var(--canvas-w);
-    height: calc(var(--canvas-w) * 1844 / 853);
-  }
 }
 
 .step-card {

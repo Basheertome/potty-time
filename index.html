@@ -7,6 +7,11 @@
 <link rel="manifest" href="manifest.webmanifest" />
 <link rel="icon" href="icons/icon-192.png" sizes="192x192" />
 <link rel="icon" href="icons/icon-512.png" sizes="512x512" />
+<!-- iOS picks this over the manifest's icons for the home screen. The
+     ?v= makes a changed icon a new URL; iOS still snapshots the icon
+     when the app is added, so an already-installed copy keeps the old
+     one until it's removed and re-added. -->
+<link rel="apple-touch-icon" href="icons/icon-192.png?v=40" />
 <meta name="theme-color" content="#FF8FAB" />
 <meta name="mobile-web-app-capable" content="yes" />
 <!-- The ?v= on style.css/script.js is the cache key for those files: a
@@ -16,10 +21,10 @@
      service worker always fetches it from the network first - that's
      what delivers the new ?v= numbers. Run ./bump-version.sh to update
      every reference at once. -->
-<link rel="stylesheet" href="style.css?v=36" />
+<link rel="stylesheet" href="style.css?v=40" />
 </head>
 <body>
   <div id="app"><div id="canvas"></div></div>
-  <script src="script.js?v=36"></script>
+  <script src="script.js?v=40"></script>
 </body>
 </html>
