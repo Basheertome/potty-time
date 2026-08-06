@@ -5,13 +5,20 @@
      anything sized off "a % of the screen" can scale with the
      actual rendered art instead of the raw viewport - the two
      match in portrait, but diverge once #canvas is letterboxed in
-     landscape, where the viewport is wider than the art itself. */
-  --canvas-w: max(100vw, 100vh * 853 / 1844);
+     landscape, where the viewport is wider than the art itself.
+     Uses dvw/dvh (not vw/vh) - see #app for why. */
+  --canvas-w: max(100dvw, 100dvh * 853 / 1844);
 }
 
 @media (orientation: landscape) {
   :root {
-    --canvas-w: min(100vw, 100vh * 853 / 1844);
+    /* Floored at 340px so the letterboxed canvas never shrinks so far
+       that percentage-wide overlays (like the main button) become too
+       narrow to fit their clamped-minimum-size text without wrapping
+       onto an extra, cramped line. On very short/narrow landscape
+       viewports this trades a bit of top/bottom clipping of decorative
+       art for keeping the UI readable and well-proportioned. */
+    --canvas-w: max(340px, min(100dvw, 100dvh * 853 / 1844));
   }
 }
 
@@ -42,11 +49,16 @@ body {
 }
 
 /* Fills the whole screen edge-to-edge, no letterbox bars - clips
-   whatever of #canvas overhangs its edges. */
+   whatever of #canvas overhangs its edges. Uses dvw/dvh (dynamic
+   viewport units), not vw/vh: plain vh is notorious on iOS Safari for
+   going stale across an orientation change - it can keep resolving to
+   the old (landscape) viewport size after rotating back to portrait,
+   leaving a gap of flat background at the bottom. dvh is specifically
+   designed to track the current visual viewport instead. */
 #app {
   position: relative;
-  width: 100vw;
-  height: 100vh;
+  width: 100dvw;
+  height: 100dvh;
   overflow: hidden;
 }
 
@@ -72,8 +84,8 @@ body {
   position: absolute;
   top: 50%;
   left: 50%;
-  width: max(100vw, 100vh * 853 / 1844);
-  height: max(100vh, 100vw * 1844 / 853);
+  width: max(100dvw, 100dvh * 853 / 1844);
+  height: max(100dvh, 100dvw * 1844 / 853);
   transform: translate(-50%, -50%);
   background-image: url("images/bg-pond.png");
   background-size: 100% 100%;
@@ -82,8 +94,11 @@ body {
 
 @media (orientation: landscape) {
   #canvas {
-    width: min(100vw, 100vh * 853 / 1844);
-    height: min(100vh, 100vw * 1844 / 853);
+    /* Derived from --canvas-w (not its own min()) so the floor above
+       and the aspect ratio always agree - #canvas can never end up
+       wider than the floored width implies. */
+    width: var(--canvas-w);
+    height: calc(var(--canvas-w) * 1844 / 853);
   }
 }
 
@@ -381,7 +396,7 @@ button.frog-overlay {
 
 @keyframes fall {
   to {
-    transform: translateY(115vh) rotate(360deg);
+    transform: translateY(115dvh) rotate(360deg);
     opacity: 0.9;
   }
 }
@@ -417,5 +432,5 @@ button.frog-overlay {
 
 @keyframes butterfly-fly {
   from { transform: translateX(0) scaleX(var(--fly-flip, 1)); }
-  to { transform: translateX(var(--fly-distance, 100vw)) scaleX(var(--fly-flip, 1)); }
+  to { transform: translateX(var(--fly-distance, 100dvw)) scaleX(var(--fly-flip, 1)); }
 }

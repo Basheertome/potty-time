@@ -719,12 +719,12 @@ function spawnButterfly() {
 
   const fromLeft = Math.random() < 0.5;
   if (fromLeft) {
-    el.style.left = "-15vw";
-    el.style.setProperty("--fly-distance", "130vw");
+    el.style.left = "-15dvw";
+    el.style.setProperty("--fly-distance", "130dvw");
     el.style.setProperty("--fly-flip", "-1");
   } else {
-    el.style.left = "115vw";
-    el.style.setProperty("--fly-distance", "-130vw");
+    el.style.left = "115dvw";
+    el.style.setProperty("--fly-distance", "-130dvw");
     el.style.setProperty("--fly-flip", "1");
   }
 
