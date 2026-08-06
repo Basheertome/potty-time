@@ -3,7 +3,7 @@
 // exactly: the page asks for "style.css?v=<APP_VERSION>", and that
 // full URL including the query is the cache key, so a mismatch means
 // every request misses the cache and the app stops working offline.
-const APP_VERSION = "46";
+const APP_VERSION = "47";
 const CACHE_NAME = `potty-time-v${APP_VERSION}`;
 
 const APP_SHELL = [
@@ -56,7 +56,20 @@ const APP_SHELL = [
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL))
+    caches.open(CACHE_NAME).then((cache) =>
+      // Deliberately not cache.addAll. addAll is all-or-nothing: a
+      // single URL that 404s rejects the whole thing, the install
+      // fails, this worker never activates, and the *previous* one
+      // stays in charge - serving the old version of the app forever,
+      // silently, with no way for it to recover on its own. Adding
+      // them one at a time means a missing file costs only that file;
+      // the runtime fetch handler will pick it up from the network
+      // later anyway. Precaching is an optimisation, not a
+      // precondition, and it should not be able to brick an update.
+      Promise.all(
+        APP_SHELL.map((url) => cache.add(url).catch(() => {}))
+      )
+    )
   );
   self.skipWaiting();
 });
