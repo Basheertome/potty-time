@@ -1,5 +1,22 @@
+@font-face {
+  font-family: "Patrick Hand";
+  src: url("fonts/patrick-hand.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
-  --text-dark: #3a3a3a;
+  --text-color: #fff;
+  /* Simulates a stroke via 8 tightly-packed offset shadows (real
+     text-stroke isn't well-supported without -webkit prefixes), plus
+     a stronger/larger soft drop shadow beneath for lift off the pond
+     background. */
+  --text-outline:
+    -2px -2px 0 #0f8c46, 0 -2px 0 #0f8c46, 2px -2px 0 #0f8c46,
+    -2px 0 0 #0f8c46, 2px 0 0 #0f8c46,
+    -2px 2px 0 #0f8c46, 0 2px 0 #0f8c46, 2px 2px 0 #0f8c46,
+    0 4px 10px rgba(0, 0, 0, 0.35);
   color-scheme: light;
   /* Mirrors #canvas's own width formula (see #canvas below) so
      anything sized off "a % of the screen" can scale with the
@@ -38,7 +55,7 @@ html, body {
   overflow: hidden;
   overscroll-behavior: none;
   touch-action: none;
-  font-family: "Baloo 2", "Comic Sans MS", "Trebuchet MS", sans-serif;
+  font-family: "Patrick Hand", "Comic Sans MS", "Trebuchet MS", sans-serif;
   background: #bae6ea;
 }
 
@@ -152,18 +169,18 @@ body {
 
 .step-title {
   font-size: clamp(2.2rem, calc(8 * var(--canvas-w) / 100), 3.6rem);
-  color: var(--text-dark);
+  color: var(--text-color);
   margin: 0;
   font-weight: 800;
-  text-shadow: 0 2px 5px rgba(186, 229, 232, 0.9);
+  text-shadow: var(--text-outline);
 }
 
 .step-instruction {
   font-size: clamp(1.2rem, calc(4.2 * var(--canvas-w) / 100), 1.8rem);
-  color: var(--text-dark);
+  color: var(--text-color);
   margin: 0;
   max-width: 480px;
-  text-shadow: 0 2px 5px rgba(186, 229, 232, 0.9);
+  text-shadow: var(--text-outline);
 }
 
 /* The frog is a separate overlay (the background art now has it cut
@@ -227,6 +244,10 @@ button.frog-overlay {
   align-items: center;
   justify-content: center;
   padding: 0 6% 12%;
+  /* <button> elements don't inherit font-family from the page by
+     default the way a plain <div> would - needed explicitly here
+     since some steps render this as a real <button>. */
+  font-family: inherit;
   font-size: clamp(1.7rem, calc(7.2 * var(--canvas-w) / 100), 2.8rem);
   line-height: 1.05;
   font-weight: 800;
@@ -403,7 +424,8 @@ button.frog-overlay {
 
 .restart-hint {
   font-size: 1.1rem;
-  color: var(--text-dark);
+  color: var(--text-color);
+  text-shadow: var(--text-outline);
   opacity: 0.75;
 }
 

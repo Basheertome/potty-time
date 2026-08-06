@@ -1,10 +1,11 @@
-const CACHE_NAME = "potty-time-v30";
+const CACHE_NAME = "potty-time-v31";
 const APP_SHELL = [
   "./",
   "./index.html",
   "./style.css",
   "./script.js",
   "./manifest.webmanifest",
+  "./fonts/patrick-hand.woff2",
   "./icons/icon-192.png",
   "./icons/icon-512.png",
   "./icons/icon-maskable-192.png",
