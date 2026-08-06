@@ -31,13 +31,20 @@
      only and never eats into the letterform; the visible weight is
      therefore half this value. */
   --text-stroke-width: 0.075em;
+  /* Small text needs a proportionally heavier stroke than a headline to
+     read as firmly: at a fixed em ratio the caption's outline works out
+     to well under a pixel, which is what left "Let's get started!"
+     looking faint next to the title. */
+  --text-stroke-width-small: 0.1em;
   /* Two layers rather than one blur: a tight contact shadow that
      defines the edge, plus a wider soft one for lift. Tinted with the
      scene's deep green instead of neutral black, which turned muddy
-     over the blue-green water. */
+     over the blue-green water. Kept light - the stroke is what carries
+     legibility here, so the shadow only has to suggest depth. Heavier
+     values read as a drop-shadowed sticker, especially on the title. */
   --text-lift:
-    0 0.015em 0.02em rgba(20, 61, 44, 0.32),
-    0 0.05em 0.14em rgba(20, 61, 44, 0.24);
+    0 0.012em 0.015em rgba(20, 61, 44, 0.20),
+    0 0.04em 0.10em rgba(20, 61, 44, 0.14);
   /* Fallback ring for browsers without paint-order (see @supports
      below). Same 8 offsets as before but em-scaled and tightened to
      roughly match the true stroke's visible weight. */
@@ -239,23 +246,50 @@ body {
   pointer-events: none;
 }
 
+/* Anchored to the top of the *screen* rather than centred in the upper
+   half, so the icon and title sit up in the sky instead of drifting
+   down over the frog on his rock.
+
+   The card lives inside #canvas so its children stay registered with
+   the artwork, but #canvas is often taller than the screen (it's a
+   cover fit in portrait, and taller still in landscape) with the
+   overhang split evenly above and below. Adding half that overhang
+   back cancels the part hidden above the top edge, which is what makes
+   this screen-relative instead of art-relative - without it, a phone
+   whose aspect is shorter than the artwork's would push the icon up
+   off the top of the display. */
 .step-card.has-button {
-  bottom: 54.28%;
-  justify-content: center;
-  padding: 40px 24px 0;
+  bottom: auto;
+  justify-content: flex-start;
+  /* Tighter than the base card's spacing: pulls the subtitle clear of
+     the frog's head, and groups the icon, title and subtitle as one
+     block of header rather than three drifting items. */
+  gap: 11px;
+  padding: calc(
+      max(0px, (var(--canvas-h) - var(--vh)) / 2)
+      + env(safe-area-inset-top, 0px)
+      + var(--vh) * 0.022
+    )
+    24px 0;
 }
 
 .step-emoji {
   width: min(calc(28 * var(--canvas-w) / 100), 170px);
   height: min(calc(28 * var(--canvas-w) / 100), 170px);
   line-height: 1;
-  filter: drop-shadow(0 8px 12px rgba(0, 0, 0, 0.15));
 }
 
+/* The shadow goes on the image, not on the wrapper. A drop-shadow is
+   meant to trace the alpha of what it's applied to, and on this
+   wrapper - a plain div whose only content is the SVG - WebKit traces
+   the div's box instead, printing a soft rectangle behind the emoji
+   that Chromium doesn't produce. Filtering the <img> directly gives
+   the filter the image's own alpha to work from. */
 .step-emoji img {
   display: block;
   width: 100%;
   height: 100%;
+  filter: drop-shadow(0 0.05em 0.07em rgba(20, 61, 44, 0.22));
 }
 
 .step-emoji.bounce {
@@ -298,6 +332,12 @@ body {
     paint-order: stroke fill;
     text-shadow: var(--text-lift);
   }
+
+  /* Optical correction: see --text-stroke-width-small. */
+  .step-instruction,
+  .restart-hint {
+    -webkit-text-stroke-width: var(--text-stroke-width-small);
+  }
 }
 
 .step-title {
@@ -307,8 +347,11 @@ body {
   transform: var(--letter-stretch);
 }
 
+/* Bumped up from a 1.2rem floor: on a phone this line was pinned at its
+   minimum, which left it small enough that the outline had very little
+   letter to sit against. */
 .step-instruction {
-  font-size: clamp(1.2rem, calc(4.2 * var(--canvas-w) / 100), 1.8rem);
+  font-size: clamp(1.45rem, calc(5.2 * var(--canvas-w) / 100), 1.9rem);
   margin: 0;
   max-width: 480px;
   transform: var(--letter-stretch);
@@ -388,8 +431,8 @@ button.frog-overlay {
      two-layer em-based shadow as the scene text, pitched to the darker
      green of the button so the letters look pressed into it. */
   text-shadow:
-    0 0.02em 0.02em rgba(9, 56, 30, 0.38),
-    0 0.05em 0.12em rgba(9, 56, 30, 0.28);
+    0 0.015em 0.015em rgba(9, 56, 30, 0.22),
+    0 0.04em 0.09em rgba(9, 56, 30, 0.15);
   cursor: pointer;
   z-index: 2;
 }
