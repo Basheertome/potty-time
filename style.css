@@ -89,20 +89,20 @@
 
   --canvas-w: var(--canvas-w-portrait);
 
-  /* Step icon. Normally sized against the artwork, but landscape is
-     short enough that the header stack (title, subtitle, then icon)
-     has to share the space above the button with it, so there it also
-     gets capped against viewport height. Portrait has room to spare
-     and deliberately keeps the full art-relative size. */
-  --emoji-size-portrait: min(calc(28 * var(--canvas-w) / 100), 170px);
-  --emoji-size-landscape: min(
-    calc(28 * var(--canvas-w) / 100),
-    calc(var(--vh) * 0.13)
-  );
-  --emoji-size: var(--emoji-size-portrait);
+  --emoji-size: min(calc(28 * var(--canvas-w) / 100), 170px);
   /* Always derived from the width, so the artwork's 853:1844 ratio
      holds in both orientations no matter which branch won above. */
   --canvas-h: calc(var(--canvas-w) * 1844 / 853);
+
+  /* How far the artwork's outer edges sit from the screen's. Negative
+     in portrait, where the art is wider than the screen and hangs off
+     both sides equally; clamped to zero in landscape, which is what
+     pushes the two halves apart to the screen edges and opens the gap
+     the centre column fills. One expression covers both because the
+     sign of the difference is itself the test. */
+  --scene-edge: min(0px, calc((var(--vw) - var(--canvas-w)) / 2));
+  /* 427 of the artwork's 853 columns - see the overlap note on #app. */
+  --scene-half-w: calc(var(--canvas-w) * 427 / 853);
 }
 
 /* Which of the two applies is decided by data-orientation, set from the
@@ -122,18 +122,31 @@
 @media (orientation: landscape) {
   :root {
     --canvas-w: var(--canvas-w-landscape);
-    --emoji-size: var(--emoji-size-landscape);
+  }
+  .step-card.is-start .step-emoji {
+    display: none;
   }
 }
 
 :root[data-orientation="portrait"] {
   --canvas-w: var(--canvas-w-portrait);
-  --emoji-size: var(--emoji-size-portrait);
 }
 
 :root[data-orientation="landscape"] {
   --canvas-w: var(--canvas-w-landscape);
-  --emoji-size: var(--emoji-size-landscape);
+}
+
+/* Landscape is short, and on the start screen the icon is the one thing
+   that isn't carrying information - the title says what the app is and
+   the button says what to do. Dropping it there keeps the heading and
+   the button comfortably apart instead of shrinking everything to fit.
+   Step screens keep theirs: there the icon *is* the instruction. */
+:root[data-orientation="landscape"] .step-card.is-start .step-emoji {
+  display: none;
+}
+
+:root[data-orientation="portrait"] .step-card.is-start .step-emoji {
+  display: block;
 }
 
 * {
@@ -163,56 +176,42 @@ body {
   justify-content: center;
 }
 
-/* Fills the whole screen edge-to-edge, no letterbox bars - clips
-   whatever of #canvas overhangs its edges. */
+/* The pond scene itself, drawn edge to edge as three layers.
+
+   The artwork is split down the middle into two halves. The left half
+   is pinned to the left of the screen and the right half to the right,
+   and the gap between them is filled by the single pixel column the cut
+   was made on, stretched horizontally. That column is pure sky-to-water
+   gradient - the two hills part in the middle of the painting, so
+   nothing solid crosses the centre - which is why widening it just
+   opens up more pond instead of smearing an object across the screen.
+   Because the fill is literally the column both halves were cut from,
+   the joins continue exactly, with no seam to hide.
+
+   The same three layers cover portrait too: there the offset below
+   resolves to the halves sitting adjacent, which reproduces the whole
+   painting exactly as before. The halves are each cut one pixel wide of
+   half, so where they meet they overlap by a fraction of a pixel rather
+   than risking a hairline gap. */
 #app {
   position: relative;
   width: var(--vw);
   height: var(--vh);
   overflow: hidden;
-}
-
-/* Full-bleed backdrop, so landscape doesn't sit in flat blue bars.
-   It's the same pond art stretched to the full width of the screen at
-   exactly #canvas's height and vertical position, which is the detail
-   that makes it work: every horizontal band in the painting - sky,
-   hills, waterline - lands at the same height as in #canvas, so the
-   scene reads as continuing off both edges instead of as a second,
-   mismatched copy behind the first. Only the horizontal stretch
-   differs, and the blur hides that along with the seam.
-
-   In portrait #canvas covers this completely, so it costs nothing
-   there - but it does mean any momentary gap at an edge shows blurred
-   pond rather than a flat slab of page background. */
-#app::before {
-  content: "";
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: var(--vw);
-  /* Normally --canvas-h, which is what aligns the bands. It is always
-     the taller of the two when the layout is correct, so the max() only
-     ever engages during the brief window after a rotation before the
-     re-measure lands - and there it guarantees blurred pond rather than
-     a flat slab of page background. */
-  height: max(var(--canvas-h), var(--vh));
-  /* Scaled up a little so the blur's own soft edges fall outside the
-     screen instead of fading in at the sides. */
-  transform: translate(-50%, -50%) scale(1.08);
-  background-image: url("images/bg-pond.png");
-  /* 200% horizontally samples just the middle of the painting - mostly
-     open water and hillside - so the busy left-hand rock never lands in
-     the margins as a grey smear. Vertically it stays at 100%, which is
-     what preserves the band alignment described above. */
-  background-size: 200% 100%;
-  background-position: 50% 50%;
+  background-color: #bae6ea;
+  background-image:
+    url("images/bg-pond-left.png"),
+    url("images/bg-pond-right.png"),
+    url("images/bg-pond-center.png");
+  background-position:
+    left var(--scene-edge) top 50%,
+    right var(--scene-edge) top 50%,
+    center top 50%;
+  background-size:
+    var(--scene-half-w) var(--canvas-h),
+    var(--scene-half-w) var(--canvas-h),
+    100% var(--canvas-h);
   background-repeat: no-repeat;
-  /* Enough blur that individual objects dissolve into atmosphere, while
-     the hill band stays readable enough to sell the scene carrying on
-     past the edges. Pulled back and lightened a little so it sits
-     behind the crisp middle rather than competing with it. */
-  filter: blur(44px) saturate(0.85) brightness(1.06);
-  z-index: 0;
 }
 
 /* Always kept at the artwork's own 853:1844 ratio, then centered.
@@ -229,9 +228,12 @@ body {
    the Screen Orientation API lock in script.js do their best to
    prevent it, but neither is guaranteed - notably not on iOS Safari),
    so --canvas-w resolves to a contain fit instead: the same
-   aspect-locked canvas, scaled to fit *within* the viewport. Nothing
-   is clipped, the whole app stays visible and tappable, and the
-   backdrop above fills the space either side. */
+   aspect-locked canvas, scaled to fit *within* the viewport, centred,
+   while #app's split background fills the width behind it.
+
+   It carries no artwork of its own any more - #app draws the scene -
+   so this is purely the coordinate space the overlays are measured
+   against. */
 #canvas {
   position: absolute;
   top: 50%;
@@ -239,9 +241,6 @@ body {
   width: var(--canvas-w);
   height: var(--canvas-h);
   transform: translate(-50%, -50%);
-  background-image: url("images/bg-pond.png");
-  background-size: 100% 100%;
-  background-repeat: no-repeat;
 }
 
 .step-card {
@@ -387,9 +386,17 @@ body {
    sits below the text cards (z-index 3) and bubbles (z-index 5) so
    both visibly draw over it; those cards have pointer-events:none so
    clicks still reach the frog for the back-navigation to work. */
+/* The frog belongs to the left half of the painting - he has to stay on
+   his rock, and the rock travels to the screen edge when the halves
+   split apart. So rather than sitting at the left edge of the centred
+   #canvas, he's shifted out by however far the left half moved, which
+   is exactly the gap that opened on that side. In portrait no gap opens
+   and this resolves to zero, leaving him where he has always been.
+   Everything else on the canvas - button, ripple, text - is centre
+   business and stays put. */
 .frog-overlay {
   position: absolute;
-  left: 0%;
+  left: calc(0px - max(0px, (var(--vw) - var(--canvas-w)) / 2));
   top: 26.5%;
   width: 42%;
   height: 19.5%;

@@ -382,7 +382,7 @@ function renderStart() {
   createFrogOverlay({ clickable: false });
 
   const card = document.createElement("div");
-  card.className = "step-card has-button";
+  card.className = "step-card has-button is-start";
 
   const emoji = createStepIcon("images/emoji/frog.svg");
 

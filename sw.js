@@ -3,7 +3,7 @@
 // exactly: the page asks for "style.css?v=<APP_VERSION>", and that
 // full URL including the query is the cache key, so a mismatch means
 // every request misses the cache and the app stops working offline.
-const APP_VERSION = "43";
+const APP_VERSION = "44";
 const CACHE_NAME = `potty-time-v${APP_VERSION}`;
 
 const APP_SHELL = [
@@ -28,7 +28,12 @@ const APP_SHELL = [
   "./audio/voice-washhands.mp3",
   "./audio/voice-complete.mp3",
   "./audio/goodjob-fx.mp3",
-  "./images/bg-pond.png",
+  // bg-pond.png itself is no longer loaded at runtime - the scene is
+  // drawn from these three pieces (see #app in style.css). The full
+  // image stays in the repo as the master the pieces are cut from.
+  "./images/bg-pond-left.png",
+  "./images/bg-pond-right.png",
+  "./images/bg-pond-center.png",
   "./images/pond-button.png",
   "./images/pond-button-reflection.png",
   "./images/bubble.png",
