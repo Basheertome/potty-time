@@ -7,54 +7,38 @@
 }
 
 :root {
-  /* A hair off pure white - warm enough to feel drawn rather than
-     clinical against the scene's cool blues. */
-  --text-color: #fffdf7;
   /* Patrick Hand reads a little condensed at its natural width, so text
      elements are stretched horizontally by this factor (paired with
      display:inline-block/block so the transform has a box to act on -
      see each usage below). */
   --letter-stretch: scaleX(1.12);
 
-  /* Deep, muted pond green. The old outline used a fully saturated
-     green, which read as a clip-art sticker border; dropping the
-     saturation and value lets the outline behave like the edge of the
-     artwork instead of competing with it. */
-  --text-stroke-color: #2c6e49;
-  /* Every text measurement below is in em, so a caption and a headline
-     get proportionally identical treatment. The old ring was a flat
-     2px: ~3% of the title's height but ~10% of the small text's, and
-     since Patrick Hand's stems are only about 2px at that size the
-     ring was as thick as the letters - clogging the counters in
-     "Let's get started!" and blobbing the apostrophe.
-     paint-order draws the stroke behind the fill, so it grows outward
-     only and never eats into the letterform; the visible weight is
-     therefore half this value. */
-  --text-stroke-width: 0.075em;
-  /* Small text needs a proportionally heavier stroke than a headline to
-     read as firmly: at a fixed em ratio the caption's outline works out
-     to well under a pixel, which is what left "Let's get started!"
-     looking faint next to the title. */
-  --text-stroke-width-small: 0.1em;
-  /* Barely there, and that is the point. The stroke already does all
-     the work of separating the letters from the pond, so this only has
-     to stop them looking pasted flat on top of it. Anything heavier
-     shows up as a grey-green halo under the headline - which is what
-     it kept doing at larger values. A single tight layer, no wide
-     second one: it was the wide layer that read as the halo. */
-  --text-lift: 0 0.02em 0.04em rgba(20, 61, 44, 0.13);
-  /* Fallback ring for browsers without paint-order (see @supports
-     below). Same 8 offsets as before but em-scaled and tightened to
-     roughly match the true stroke's visible weight. */
+  /* Scene text: green over the pond, restyled to blue on the
+     celebration screen (see .complete-card). Both are set here rather
+     than on each element so they inherit - .complete-card only has to
+     restate the two colours and everything under it follows. */
+  --text-fill: #359f57;
+  --text-stroke-color: #1b9b44;
+  /* Width of the stroke *outside* the letterform. -webkit-text-stroke
+     centres its stroke on the outline, and paint-order then paints the
+     fill back over the inner half, so the value handed to it has to be
+     double this to leave this much showing. Headline weight; small text
+     overrides it below. */
+  --stroke-outside: 0.7px;
+  /* Fallback for browsers without paint-order, which would otherwise
+     get a centred stroke eating into the letters. Eight offsets at the
+     stroke distance approximate the same outline. Built from the two
+     properties above, so it follows the colour and weight in force on
+     whichever element it lands on. */
   --text-ring:
-    -0.035em -0.035em 0 var(--text-stroke-color),
-    0 -0.04em 0 var(--text-stroke-color),
-    0.035em -0.035em 0 var(--text-stroke-color),
-    -0.04em 0 0 var(--text-stroke-color),
-    0.04em 0 0 var(--text-stroke-color),
-    -0.035em 0.035em 0 var(--text-stroke-color),
-    0 0.04em 0 var(--text-stroke-color),
-    0.035em 0.035em 0 var(--text-stroke-color);
+    calc(0px - var(--stroke-outside)) calc(0px - var(--stroke-outside)) 0 var(--text-stroke-color),
+    0 calc(0px - var(--stroke-outside)) 0 var(--text-stroke-color),
+    var(--stroke-outside) calc(0px - var(--stroke-outside)) 0 var(--text-stroke-color),
+    calc(0px - var(--stroke-outside)) 0 0 var(--text-stroke-color),
+    var(--stroke-outside) 0 0 var(--text-stroke-color),
+    calc(0px - var(--stroke-outside)) var(--stroke-outside) 0 var(--text-stroke-color),
+    0 var(--stroke-outside) 0 var(--text-stroke-color),
+    var(--stroke-outside) var(--stroke-outside) 0 var(--text-stroke-color);
   color-scheme: light;
 
   /* The live viewport, in real pixels, written by setViewportSize() in
@@ -325,40 +309,50 @@ body {
   100% { transform: scale(1) rotate(0deg); }
 }
 
-/* Text that floats directly over the pond art needs an outline to stay
-   legible across water, lily pads and clouds. Text sitting on the solid
-   green button does not (see .pond-button) - it already has a uniform
-   high-contrast backdrop, and outlining it would only add green onto
-   green. Both share the same shadow language so they still read as one
-   family. */
+/* Text floating over the pond art: filled and outlined, no drop shadow.
+   Text on the solid button is a separate treatment (see .pond-button)
+   and keeps its own colour, spacing and shadow.
+
+   The wider tracking is part of the look rather than incidental - an
+   outline adds weight to the outside of every letter, so at the default
+   spacing the letters start crowding each other. */
 .step-title,
 .step-instruction,
 .restart-hint,
 .yay-pop-text {
-  color: var(--text-color);
-  text-shadow: var(--text-ring), var(--text-lift);
+  color: var(--text-fill);
+  letter-spacing: 0.07em;
+  text-shadow: var(--text-ring);
+}
+
+/* Small text takes a lighter stroke than the headline. */
+.step-instruction,
+.restart-hint {
+  --stroke-outside: 0.5px;
 }
 
 /* The real stroke, wherever it's available: uniform at every angle,
-   where the 8-offset fallback ring is measurably lumpier (its diagonals
-   land ~1.4x further out than its orthogonals, which shows up as
-   corners on round letters). paint-order puts it behind the fill so it
-   only ever grows outward. */
+   where the 8-offset fallback ring above is measurably lumpier (its
+   diagonals land ~1.4x further out than its orthogonals, which shows up
+   as corners on round letters). paint-order puts it behind the fill so
+   it only ever grows outward, hence the doubling. */
 @supports (paint-order: stroke) {
   .step-title,
   .step-instruction,
   .restart-hint,
   .yay-pop-text {
-    -webkit-text-stroke: var(--text-stroke-width) var(--text-stroke-color);
+    -webkit-text-stroke: calc(var(--stroke-outside) * 2) var(--text-stroke-color);
     paint-order: stroke fill;
-    text-shadow: var(--text-lift);
+    text-shadow: none;
   }
+}
 
-  /* Optical correction: see --text-stroke-width-small. */
-  .step-instruction,
-  .restart-hint {
-    -webkit-text-stroke-width: var(--text-stroke-width-small);
-  }
+/* The celebration screen swaps the palette to blue. Only the two
+   colours change - weights, spacing and everything else are inherited
+   from the rules above. */
+.complete-card {
+  --text-fill: #349bd7;
+  --text-stroke-color: #2094d8;
 }
 
 .step-title {
@@ -462,11 +456,13 @@ button.frog-overlay {
   font-size: clamp(1.7rem, calc(7.2 * var(--canvas-w) / 100), 2.8rem);
   line-height: 1.05;
   font-weight: 800;
-  color: var(--text-color);
+  /* Deliberately left alone while the scene text was restyled: warm
+     white, its own shadow, and the page's default tracking rather than
+     the wider tracking the outlined text uses. A hair off pure white so
+     it reads as drawn rather than clinical. */
+  color: #fffdf7;
   /* No outline here - white on the button's solid green already has the
-     contrast, and a green stroke would just be green on green. Same
-     two-layer em-based shadow as the scene text, pitched to the darker
-     green of the button so the letters look pressed into it. */
+     contrast, and a green stroke would just be green on green. */
   text-shadow:
     0 0.015em 0.015em rgba(9, 56, 30, 0.22),
     0 0.04em 0.09em rgba(9, 56, 30, 0.15);
