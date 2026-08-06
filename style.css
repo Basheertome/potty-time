@@ -8,6 +8,11 @@
 
 :root {
   --text-color: #fff;
+  /* Patrick Hand reads a little condensed at its natural width, so text
+     elements are stretched horizontally by this factor (paired with
+     display:inline-block/block so the transform has a box to act on -
+     see each usage below). */
+  --letter-stretch: scaleX(1.12);
   /* Simulates a stroke via 8 tightly-packed offset shadows (real
      text-stroke isn't well-supported without -webkit prefixes), plus
      a stronger/larger soft drop shadow beneath for lift off the pond
@@ -174,6 +179,7 @@ body {
   margin: 0;
   font-weight: 800;
   text-shadow: var(--text-outline);
+  transform: var(--letter-stretch);
 }
 
 .step-instruction {
@@ -181,6 +187,7 @@ body {
   color: var(--text-color);
   margin: 0;
   max-width: 480px;
+  transform: var(--letter-stretch);
   text-shadow: var(--text-outline);
 }
 
@@ -272,6 +279,15 @@ button.frog-overlay {
 
 .pond-button.static div {
   white-space: nowrap;
+  transform: var(--letter-stretch);
+}
+
+/* The label is a wrapped <span> (see setButtonLabel in script.js) so
+   this transform stretches only the text, not the button's own box -
+   which also carries the pond-button background image. */
+.pond-button > span {
+  display: inline-block;
+  transform: var(--letter-stretch);
 }
 
 .pond-button.bobble {
@@ -308,6 +324,11 @@ button.frog-overlay {
   text-shadow: 0 3px 6px rgba(0, 0, 0, 0.25);
   animation: float-up 1.4s ease forwards;
   pointer-events: none;
+}
+
+.yay-pop-text {
+  display: inline-block;
+  transform: var(--letter-stretch);
 }
 
 .yay-star {
@@ -428,6 +449,7 @@ button.frog-overlay {
   color: var(--text-color);
   text-shadow: var(--text-outline);
   opacity: 0.75;
+  transform: var(--letter-stretch);
 }
 
 /* Butterflies drift across #app (not #canvas) so they aren't cut off

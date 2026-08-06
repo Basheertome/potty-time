@@ -97,6 +97,16 @@ function createStepIcon(src) {
   return wrap;
 }
 
+// Sets a pond-button's label as a wrapped span rather than plain
+// textContent, so the horizontal letter-stretch (.pond-button > span in
+// style.css) applies only to the text and not to the button's own box
+// (which also carries the pond-button background image).
+function setButtonLabel(button, text) {
+  const label = document.createElement("span");
+  label.textContent = text;
+  button.appendChild(label);
+}
+
 let frogEl = null;
 let frogAnimating = false;
 
@@ -362,7 +372,7 @@ function render() {
 
   const button = document.createElement("button");
   button.className = "pond-button";
-  button.textContent = step.title;
+  setButtonLabel(button, step.title);
   button.id = "action-button";
   button.addEventListener("click", () => handleStepComplete(step, emoji, card, button, reflection));
   canvas.appendChild(button);
@@ -395,7 +405,7 @@ function renderStart() {
 
   const button = document.createElement("button");
   button.className = "pond-button";
-  button.textContent = "Start";
+  setButtonLabel(button, "Start");
   button.id = "action-button";
   button.addEventListener("click", () => {
     button.disabled = true;
@@ -430,6 +440,7 @@ function showYay(card) {
   const yay = document.createElement("div");
   yay.className = "yay-pop";
   const text = document.createElement("span");
+  text.className = "yay-pop-text";
   text.textContent = "Yay!";
   yay.appendChild(text);
   const star = document.createElement("img");
@@ -545,7 +556,7 @@ function runHandWashSong(step, emojiEl, card, staticButton, reflection) {
       emojiEl.classList.remove("bubble-bob");
       const button = document.createElement("button");
       button.className = "pond-button";
-      button.textContent = "All Clean!";
+      setButtonLabel(button, "All Clean!");
       button.id = "action-button";
       staticButton.replaceWith(button);
       button.addEventListener("click", () => handleStepComplete(step, emojiEl, card, button, reflection));
