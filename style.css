@@ -36,15 +36,13 @@
      to well under a pixel, which is what left "Let's get started!"
      looking faint next to the title. */
   --text-stroke-width-small: 0.1em;
-  /* Two layers rather than one blur: a tight contact shadow that
-     defines the edge, plus a wider soft one for lift. Tinted with the
-     scene's deep green instead of neutral black, which turned muddy
-     over the blue-green water. Kept light - the stroke is what carries
-     legibility here, so the shadow only has to suggest depth. Heavier
-     values read as a drop-shadowed sticker, especially on the title. */
-  --text-lift:
-    0 0.012em 0.015em rgba(20, 61, 44, 0.20),
-    0 0.04em 0.10em rgba(20, 61, 44, 0.14);
+  /* Barely there, and that is the point. The stroke already does all
+     the work of separating the letters from the pond, so this only has
+     to stop them looking pasted flat on top of it. Anything heavier
+     shows up as a grey-green halo under the headline - which is what
+     it kept doing at larger values. A single tight layer, no wide
+     second one: it was the wide layer that read as the halo. */
+  --text-lift: 0 0.02em 0.04em rgba(20, 61, 44, 0.13);
   /* Fallback ring for browsers without paint-order (see @supports
      below). Same 8 offsets as before but em-scaled and tightened to
      roughly match the true stroke's visible weight. */
@@ -170,10 +168,12 @@ html, body {
   background: #bae6ea;
 }
 
+/* Deliberately not centring #app. #app is pinned to the viewport by
+   its own inset, so there is nothing to centre - and centring actively
+   hurt: any moment where #app came out the wrong height got split into
+   a band of flat background above *and* below it. */
 body {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: block;
 }
 
 /* The pond scene itself, drawn edge to edge as three layers.
@@ -193,10 +193,17 @@ body {
    painting exactly as before. The halves are each cut one pixel wide of
    half, so where they meet they overlap by a fraction of a pixel rather
    than risking a hairline gap. */
+/* Pinned to the viewport by inset rather than sized from --vw/--vh.
+   The browser then owns the container's size, so it is right even in
+   the moments when the measured viewport isn't - coming back to a
+   backgrounded tab, Safari can briefly report a much shorter viewport,
+   and when that number drove the height directly the whole scene
+   collapsed to a strip with flat background above and below it. Now a
+   bad reading can only misjudge the scale of the art *inside* a
+   correctly sized frame, which the re-measure corrects a frame later. */
 #app {
-  position: relative;
-  width: var(--vw);
-  height: var(--vh);
+  position: fixed;
+  inset: 0;
   overflow: hidden;
   background-color: #bae6ea;
   background-image:

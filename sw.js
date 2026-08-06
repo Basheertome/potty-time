@@ -3,7 +3,7 @@
 // exactly: the page asks for "style.css?v=<APP_VERSION>", and that
 // full URL including the query is the cache key, so a mismatch means
 // every request misses the cache and the app stops working offline.
-const APP_VERSION = "44";
+const APP_VERSION = "45";
 const CACHE_NAME = `potty-time-v${APP_VERSION}`;
 
 const APP_SHELL = [

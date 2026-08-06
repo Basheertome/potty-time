@@ -822,9 +822,15 @@ if (screen.orientation && screen.orientation.lock) {
 // bottom of the screen, showing a band of flat page background, after
 // going to landscape and back.
 function setViewportSize() {
-  const vv = window.visualViewport;
-  const width = Math.round(vv ? vv.width : window.innerWidth);
-  const height = Math.round(vv ? vv.height : window.innerHeight);
+  // Measured from #app rather than from window/visualViewport. #app is
+  // pinned to the viewport by CSS, so its box is by definition the area
+  // the artwork has to fill - and unlike the viewport APIs it cannot
+  // disagree with what is actually on screen. visualViewport in
+  // particular reports transient sizes while Safari animates back from
+  // the tab switcher, which is what produced the broken flash.
+  const rect = app.getBoundingClientRect();
+  const width = Math.round(rect.width);
+  const height = Math.round(rect.height);
   if (!width || !height) return;
 
   const root = document.documentElement;
