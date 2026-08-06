@@ -385,7 +385,6 @@ function renderStart() {
   card.className = "step-card has-button";
 
   const emoji = createStepIcon("images/emoji/frog.svg");
-  card.appendChild(emoji);
 
   const title = document.createElement("h1");
   title.className = "step-title";
@@ -396,6 +395,12 @@ function renderStart() {
   instruction.className = "step-instruction";
   instruction.textContent = "Let's get started!";
   card.appendChild(instruction);
+
+  // The icon goes last, below both lines of text. The text is what
+  // needs a clean background to stay legible, so it takes the highest,
+  // clearest part of the sky; the icon is opaque artwork and doesn't
+  // care what it sits in front of.
+  card.appendChild(emoji);
 
   canvas.appendChild(card);
 

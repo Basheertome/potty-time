@@ -88,6 +88,18 @@
   --canvas-w-landscape: max(340px, min(var(--vw), var(--vh) * 853 / 1844));
 
   --canvas-w: var(--canvas-w-portrait);
+
+  /* Step icon. Normally sized against the artwork, but landscape is
+     short enough that the header stack (title, subtitle, then icon)
+     has to share the space above the button with it, so there it also
+     gets capped against viewport height. Portrait has room to spare
+     and deliberately keeps the full art-relative size. */
+  --emoji-size-portrait: min(calc(28 * var(--canvas-w) / 100), 170px);
+  --emoji-size-landscape: min(
+    calc(28 * var(--canvas-w) / 100),
+    calc(var(--vh) * 0.13)
+  );
+  --emoji-size: var(--emoji-size-portrait);
   /* Always derived from the width, so the artwork's 853:1844 ratio
      holds in both orientations no matter which branch won above. */
   --canvas-h: calc(var(--canvas-w) * 1844 / 853);
@@ -110,15 +122,18 @@
 @media (orientation: landscape) {
   :root {
     --canvas-w: var(--canvas-w-landscape);
+    --emoji-size: var(--emoji-size-landscape);
   }
 }
 
 :root[data-orientation="portrait"] {
   --canvas-w: var(--canvas-w-portrait);
+  --emoji-size: var(--emoji-size-portrait);
 }
 
 :root[data-orientation="landscape"] {
   --canvas-w: var(--canvas-w-landscape);
+  --emoji-size: var(--emoji-size-landscape);
 }
 
 * {
@@ -274,8 +289,8 @@ body {
 }
 
 .step-emoji {
-  width: min(calc(28 * var(--canvas-w) / 100), 170px);
-  height: min(calc(28 * var(--canvas-w) / 100), 170px);
+  width: var(--emoji-size);
+  height: var(--emoji-size);
   line-height: 1;
 }
 
@@ -344,6 +359,12 @@ body {
   font-size: clamp(2.2rem, calc(8 * var(--canvas-w) / 100), 3.6rem);
   margin: 0;
   font-weight: 800;
+  /* Patrick Hand's default line box runs about 1.36x its font size, so
+     a heading with no descenders carries a band of empty leading under
+     it. That dead space reads as extra gap on top of whatever the flex
+     gap is - which is what made "You did it!" look adrift from "All
+     Done!" even though the two are only 20px apart. */
+  line-height: 1.12;
   transform: var(--letter-stretch);
 }
 
@@ -354,6 +375,8 @@ body {
   font-size: clamp(1.45rem, calc(5.2 * var(--canvas-w) / 100), 1.9rem);
   margin: 0;
   max-width: 480px;
+  /* Looser than the title's - this one can wrap to two lines. */
+  line-height: 1.25;
   transform: var(--letter-stretch);
 }
 
@@ -496,6 +519,10 @@ button.frog-overlay {
   pointer-events: none;
 }
 
+.complete-card .step-emoji {
+  margin-bottom: 10px;
+}
+
 /* Colour, stroke and shadow come from the shared scene-text rule above;
    this only adds the horizontal stretch. */
 .yay-pop-text {
@@ -590,7 +617,9 @@ button.frog-overlay {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 20px;
+  /* Tight enough that "All Done!" and "You did it!" read as one
+     message; the icon above them gets its own wider gap below. */
+  gap: 10px;
   text-align: center;
   padding: 40px 24px;
   z-index: 3;
