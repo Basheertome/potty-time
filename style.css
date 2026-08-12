@@ -680,6 +680,32 @@ button.frog-overlay {
   z-index: 4;
 }
 
+/* A toddler-sized tap target. The wings only fill about 80x60 of the
+   108px box, and shrink to nearer 56 tall at the extremes of the flap,
+   so the thing being aimed at is smaller than it looks - and it's
+   moving.
+
+   Wider than it is tall for two reasons. Widening is what actually
+   helps: along the line of flight it buys *time* in the target rather
+   than just area, roughly an extra second and a half at these speeds,
+   and a moving target is the hard part. Height is the constrained
+   axis - the lower flight lane passes within 41px of the main button
+   on a short phone, and this sits above the button in the z-order, so
+   growing it much taller would start swallowing taps meant for the
+   button.
+
+   It's a child rather than padding on .butterfly itself because
+   startButterflyFlap sizes the sprite from the element's own box; an
+   absolutely positioned pseudo-element leaves that box untouched, so
+   the butterfly is drawn exactly as before and is simply catchable
+   from further out. Clicks on it still target .butterfly, so the
+   existing handler needs no change. */
+.butterfly::after {
+  content: "";
+  position: absolute;
+  inset: -24px -48px;
+}
+
 .butterfly.flying {
   animation: butterfly-fly var(--fly-duration, 7s) linear forwards;
 }
